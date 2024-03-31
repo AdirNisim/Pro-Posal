@@ -11,7 +11,7 @@ func main() {
 }
 
 func handleJSON(w http.ResponseWriter, r *http.Request) {
-	msg := "ok"
+	msg := map[string]string{"status": "ok"}
 	respons, err := json.Marshal(msg)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

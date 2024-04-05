@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -21,7 +22,9 @@ func NewRouter() http.Handler {
 func setContentTypeJSON(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
+		start := time.Now()
 		next.ServeHTTP(w, r)
+		log.Println(r.Method, r.URL.Path, time.Since(start)) //Log the request
 	})
 }
 

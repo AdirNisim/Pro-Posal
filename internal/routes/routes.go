@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -12,20 +11,11 @@ import (
 func NewRouter() http.Handler {
 
 	router := mux.NewRouter()
-	router.Use(setContentTypeJSON)
+	router.Use(middleware)
 	router.HandleFunc("/", handleJSON).Methods("GET")
 	router.HandleFunc("/api/templates/{id}", handleRouteWithVariable).Methods("GET")
 
 	return router
-}
-
-func setContentTypeJSON(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		start := time.Now()
-		next.ServeHTTP(w, r)
-		log.Println(r.Method, r.URL.Path, time.Since(start)) //Log the request
-	})
 }
 
 func handleJSON(w http.ResponseWriter, r *http.Request) {

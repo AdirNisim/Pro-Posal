@@ -1,0 +1,13 @@
+#pull the postgress 
+
+docker pull postgress:latest
+
+#init 
+docker run --name postgres1 -p 5433:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=password -d postgres:latest
+
+#create db
+docker exec -it postgres1 createdb --username=root --owner=root propsal
+
+#check if db created in the container:
+docker exec -it postgres1 psql
+\l

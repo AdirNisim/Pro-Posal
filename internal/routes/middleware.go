@@ -26,6 +26,10 @@ func middleware(next http.Handler) http.Handler {
 			statusCode:     http.StatusOK,
 		}
 		next.ServeHTTP(wrapped, r)
-		log.Println(wrapped.statusCode, r.Method, r.URL.Path, time.Since(start)) //Log the request
+
+		duration := time.Since(start).Milliseconds()
+
+		// Log the request with duration in milliseconds
+		log.Printf("%d %s %s %dms\n", wrapped.statusCode, r.Method, r.URL.Path, duration)
 	})
 }

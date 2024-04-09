@@ -1,0 +1,14 @@
+output   = "my_models"
+wipe     = true
+no-tests = false
+add-enum-types = true
+
+[psql]
+dbname = "proposal"
+host   = "localhost"
+port   = 5432
+user   = "root"
+pass   = "password"
+schema = "myschema"
+sslmode = "disable" 
+blacklist = ["migrations"]

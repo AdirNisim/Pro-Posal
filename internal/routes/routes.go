@@ -13,7 +13,7 @@ func NewRouter() http.Handler {
 
 	router.HandleFunc("/", handleJSON).Methods("GET")
 	router.HandleFunc("/api/templates/{id}", handleRouteWithVariable).Methods("GET")
-
+	router.HandleFunc("/api/user/{name}", handleUserRequest).Methods("GET")
 	return router
 }
 
@@ -46,4 +46,21 @@ func handleRouteWithVariable(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(response)
+}
+
+func handleUserRequest(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	name := vars["user"]
+
+	msg := map[string]string{"status": "ok", "id": name}
+	response, err := json.Marshal(msg)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(response)
+
 }

@@ -1,0 +1,13 @@
+version: '3.7'
+
+services:
+  postage-db:
+    image: postgres:latest
+    volumes:
+      - ./postage-db/pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: Aa123456
+      POSTGRES_DB: pro-posal

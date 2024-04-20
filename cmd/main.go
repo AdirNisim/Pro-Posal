@@ -8,6 +8,11 @@ import (
 )
 
 func main() {
+	err := godotenv.Load("../_.env")
+	if err != nil {
+		log.Fatalf("Error loading .env file: %v", err)
+	}
+	
 	// Initialize router (for different api routes)
 	router := routes.NewRouter()
 

@@ -141,28 +141,18 @@ func handleUserGetRequest(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonData)
 }
 
-func handleUserUpdatePassword(w http.ResponseWriter, r *http.Request) {
-	var userInput userlib.LoginRequest
-	err := json.NewDecoder(r.Body).Decode(&userInput)
-	if err != nil {
-		http.Error(w, "Error decoding JSON", http.StatusBadRequest)
-		return
-	}
+// func handleUserUpdatePassword(w http.ResponseWriter, r *http.Request) {
+// 	var userInput userlib.LoginRequest
+// 	err := json.NewDecoder(r.Body).Decode(&userInput)
+// 	if err != nil {
+// 		http.Error(w, "Error decoding JSON", http.StatusBadRequest)
+// 		return
+// 	}
 
-	user, err := userlib.GetUser(userInput.Email, userInput.Password, r)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
-		return
-	}
+// 	user, err := userlib.GetUser(userInput.Email, userInput.Password, r)
+// 	if err != nil {
+// 		http.Error(w, err.Error(), http.StatusUnauthorized)
+// 		return
+// 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	jsonData, err := json.Marshal(user)
-	if err != nil {
-		http.Error(w, "Error marshaling JSON", http.StatusInternalServerError)
-		log.Printf("Error marshaling JSON")
-		return
-	}
-
-	log.Printf("User was successfully sent.")
-	w.Write(jsonData)
-}
+// }

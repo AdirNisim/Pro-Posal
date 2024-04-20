@@ -6,11 +6,11 @@
     "configurations": [
         
         {
-            "name": "Debug Main",
+            "name": "Launch Package",
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "/Users/yakirnisim/Desktop/Pro-Posal/cmd/main.go"
+            "program": "${workspaceFolder}/cmd",
         }
     ]
 }

@@ -19,7 +19,7 @@ import (
 func NewRouter() http.Handler {
 
 	router := mux.NewRouter()
-
+	router.Use(middleware)
 	router.HandleFunc("/", handleJSON).Methods("GET")
 	router.HandleFunc("/api/templates/{id}", handleRouteWithVariable).Methods("GET")
 	router.HandleFunc("/v1/addUser", handleUserPostRequest).Methods("POST")
@@ -32,16 +32,14 @@ func handleJSON(w http.ResponseWriter, r *http.Request) {
 	response, err := json.Marshal(msg)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Printf("failed marshaling response: %v", err)
+		http.Error(w, "Something went wrong", http.StatusInternalServerError)
 		return
 	}
-
-	w.Header().Set("Content-Type", "application/json")
 	w.Write(response)
 }
 
 func handleRouteWithVariable(w http.ResponseWriter, r *http.Request) {
-
 	// Use Gorilla Mux to extract the variable
 	vars := mux.Vars(r)
 	id := vars["id"]
@@ -50,11 +48,10 @@ func handleRouteWithVariable(w http.ResponseWriter, r *http.Request) {
 	response, err := json.Marshal(msg)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Printf("failed marshaling response: %v", err)
+		http.Error(w, "Something went wrong", http.StatusInternalServerError)
 		return
 	}
-
-	w.Header().Set("Content-Type", "application/json")
 	w.Write(response)
 }
 

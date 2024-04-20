@@ -1,3 +1,9 @@
+output = "dao"
+pkgname = "dao"
+no-tests = true
+add-enum-types = true
+no-hooks = true
+
 [psql]
 dbname = "pro-posal"
 host   = "localhost"

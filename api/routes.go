@@ -12,20 +12,36 @@ import (
 )
 
 type API struct {
-	db             *database.DBConnector
-	userManagement services.UserManagementService
-	authService    services.AuthService
+	db                  *database.DBConnector
+	userManagement      services.UserManagementService
+	authService         services.AuthService
+	companyManagement   services.CompanyManagementService
+	premmisionManagment services.PermissionManagementService
+	categoryManagment   services.CategoryManagementService
+	contractManagment   services.ContractTemplateManagementService
+	offerManagment      services.OfferManagementService
 }
 
 func NewAPI(
 	db *database.DBConnector,
 	userManagementService services.UserManagementService,
 	authService services.AuthService,
+	companyManagementService services.CompanyManagementService,
+	premmisionManagment services.PermissionManagementService,
+	categoryManagment services.CategoryManagementService,
+	contractManagment services.ContractTemplateManagementService,
+	offerManagment services.OfferManagementService,
+
 ) *API {
 	return &API{
-		db:             db,
-		userManagement: userManagementService,
-		authService:    authService,
+		db:                  db,
+		userManagement:      userManagementService,
+		authService:         authService,
+		companyManagement:   companyManagementService,
+		premmisionManagment: premmisionManagment,
+		categoryManagment:   categoryManagment,
+		contractManagment:   contractManagment,
+		offerManagment:      offerManagment,
 	}
 }
 
@@ -48,14 +64,39 @@ func (a *API) NewRouter() http.Handler {
 
 	// POST /users/login - Login user and obtain auth token
 	router.HandleFunc("/users/login", a.PostUsersLogin).Methods("POST")
-
 	// GET /users/{id} - Get user information
+	router.HandleFunc("/users/{id}", a.GetUser).Methods("GET")
+	// PATCH /users/updatePassword - update the users password
+	router.HandleFunc("/users/updatePassword", a.UpdateUserPassword).Methods("PATCH")
 
-	// POST /users/{id}/update-password - Update user password
+	// companies table
+	router.HandleFunc("/companies", a.PostCompanies).Methods("POST")
+	router.HandleFunc("/companies/{id}", a.GetCompanies).Methods("GET")
+	router.HandleFunc("/companies/{id}", a.UpdateCompanies).Methods("PUT")
 
-	// router.HandleFunc("/api/templates/{id}", hand1leRouteWithVariable).Methods("GET")
-	// router.HandleFunc("/v1/addUser", handleUserPostRequest).Methods("POST")
-	// router.HandleFunc("/v1/getUser", handleUserGetRequest).Methods("POST")
+	// DELETE /companies/{companyID} -> Delete comapny from user
+
+	// templates table
+	// POST /contractsTemplates/{companyId} -> Post a  Compnay contract Template
+	// GET //contractsTemplates/{companyId} -> Get All Company contracts templates
+	// PUT /contractsTemplates/{companyId}/{contractTemplateID} -> Update contract template info
+	// DELETE //contractsTemplates/{companyId}/{contractTemplateID} -> delete specic contract templates
+
+	// categories table
+	// POST /categories/{companyId} -> add a category for company
+	// POST /categories/{companyId}/{categoryId} ->  add a sub category for company
+	// GET /categories/{companyId} -> get categories for company
+	// GET /categories/{companyId}/{categoryId}  -> Get sub categories of a category of a company
+	// PUT /categories/{companyId}/{categoryId}/{ID} -> update sub category information
+	// PUT /categories/{companyId}/{categoryID} -> update category id
+
+	// premmisions table
+	// POST /premmisions/-> post a premmisions for company and email
+	router.HandleFunc("/premmision/{id}", a.PostPermmision).Methods("POST")
+	// GET //premmisions/{companyId} -> Get All Company users premmisions
+	// PUT /premmisions/{companyId}/{userId} -> update a premmision of user under specific company
+	// DELETEPUT /premmisions/{companyId}/{userId} -> delete specic contract templates
+
 	return router
 }
 

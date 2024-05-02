@@ -1487,3 +1487,4 @@ func UserExists(ctx context.Context, exec boil.ContextExecutor, iD string) (bool
 func (o *User) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, error) {
 	return UserExists(ctx, exec, o.ID)
 }
+

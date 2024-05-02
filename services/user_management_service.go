@@ -23,9 +23,16 @@ type CreateUserRequest struct {
 	InvitedBy *string
 }
 
+type ChangeUserPasswordRequest struct {
+	Uuid        string
+	NewPassword string
+}
+
 type UserManagementService interface {
 	CreateUser(context.Context, CreateUserRequest) (*models.User, error)
 	ListUsers(context.Context) ([]*models.User, error)
+	GetUserByID(context.Context, string) (*models.User, error)
+	UpdateUserPassword(context.Context, ChangeUserPasswordRequest) (*models.User, error)
 }
 
 type userManagementServiceImpl struct {
@@ -79,6 +86,37 @@ func (s *userManagementServiceImpl) ListUsers(ctx context.Context) ([]*models.Us
 	}
 
 	return users, nil
+}
+
+func (s *userManagementServiceImpl) GetUserByID(ctx context.Context, userId string) (*models.User, error) {
+	userObj, err := dao.FindUser(ctx, s.db.Conn, userId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find user: %w", err)
+	}
+	return userDaoToUserModel(*userObj), nil
+}
+
+func (s *userManagementServiceImpl) UpdateUserPassword(ctx context.Context, req ChangeUserPasswordRequest) (*models.User, error) {
+	userDao, err := dao.FindUser(ctx, s.db.Conn, req.Uuid)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find user: %w", err)
+	}
+
+	hashedPassword, err := utils.HashPassword(req.NewPassword)
+	if err != nil {
+		return nil, fmt.Errorf("failed hashing new password: %w", err)
+	}
+
+	userDao.PasswordHash = hashedPassword
+	userDao.UpdatedAt = time.Now()
+
+	_, err = userDao.Update(ctx, s.db.Conn, boil.Whitelist("password_hash", "updated_at"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to update user password in database: %w", err)
+	}
+
+	updatedUser := userDaoToUserModel(*userDao)
+	return updatedUser, nil
 }
 
 func userDaoToUserModel(userDao dao.User) *models.User {

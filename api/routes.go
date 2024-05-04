@@ -49,6 +49,7 @@ func (a *API) NewRouter() http.Handler {
 	router := mux.NewRouter()
 
 	router.Use(middlewares.AccessLogMiddleware)
+	router.Use(middlewares.PanicMiddleware)
 	router.Use(middlewares.JSONHeaderMiddleware)
 	router.Use(func(h http.Handler) http.Handler {
 		return middlewares.AuthenticationMiddleware(a.authService, h)

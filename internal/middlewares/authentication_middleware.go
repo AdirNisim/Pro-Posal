@@ -1,6 +1,8 @@
 package middlewares
 
 import (
+	"context"
+	"log"
 	"net/http"
 	"strings"
 
@@ -27,12 +29,18 @@ func AuthenticationMiddleware(authService services.AuthService, next http.Handle
 			return
 		}
 
-		err := authService.ValidateAuthToken(r.Context(), authToken)
+		session, err := authService.ValidateAuthToken(r.Context(), authToken)
 		if err != nil {
+			log.Printf("Failed validating auth token: %v", err)
 			http.Error(w, "Invalid Bearer Token", http.StatusForbidden)
 			return
 		}
 
+		// Add the session to the context, so it can be used within different handlers
+		ctx := context.WithValue(r.Context(), "session", session)
+		r = r.WithContext(ctx)
+
+		log.Printf("Authenticated user %v with session: %v", session.UserID, session.ID)
 		next.ServeHTTP(w, r)
 	})
 }

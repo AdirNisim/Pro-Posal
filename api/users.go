@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/gorilla/mux"
 	"github.com/pro-posal/webserver/internal/utils"
 	"github.com/pro-posal/webserver/models"
 	"github.com/pro-posal/webserver/services"
@@ -17,6 +18,10 @@ type PostUsersRequestBody struct {
 	Phone     string `json:"phone"`
 	Email     string `json:"email"`
 	Password  string `json:"password"`
+}
+
+type PutUsersPasswordRequestBody struct {
+	NewPassword string `json:"new_password"`
 }
 
 func (a *API) PostUsers(w http.ResponseWriter, r *http.Request) {
@@ -77,4 +82,57 @@ func (a *API) GetUsers(w http.ResponseWriter, r *http.Request) {
 
 	w.Write(resp)
 	w.WriteHeader(http.StatusOK)
+}
+
+func (a *API) GetUser(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	userID := vars["id"]
+
+	user, err := a.userManagement.GetUserByID(r.Context(), userID)
+	if err != nil {
+		log.Printf("Failed retrieving user: %v", err)
+		http.Error(w, "Failed retrieving user", http.StatusInternalServerError)
+		return
+	}
+
+	resp, err := json.Marshal(user)
+	if err != nil {
+		log.Printf("Failed marshaling response: %v", err)
+		http.Error(w, "Failed marshalling user response object", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(resp)
+}
+
+func (a *API) UpdateUserPassword(w http.ResponseWriter, r *http.Request) {
+	var request PutUsersPasswordRequestBody
+	err := utils.UnmarshalRequest(r, &request)
+	if err != nil {
+		log.Printf("Error parsing request body: %v", err)
+		http.Error(w, "Error parsing request body", http.StatusBadRequest)
+		return
+	}
+
+	user, err := a.userManagement.UpdateUserPassword(r.Context(), services.ChangeUserPasswordRequest{
+		Uuid:        "SOMEUUID",
+		NewPassword: request.NewPassword,
+	})
+	if err != nil {
+		log.Printf("Error updating user password: %v", err)
+		http.Error(w, "Error updating user password", http.StatusInternalServerError)
+		return
+	}
+
+	// Assuming there's a method to serialize the user back to JSON or some response
+	response, err := json.Marshal(user)
+	if err != nil {
+		log.Printf("Error marshaling response: %v", err)
+		http.Error(w, "Error preparing response", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(response)
 }

@@ -28,7 +28,7 @@ func (a *API) PostUsersLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, expires, err := a.authService.CreateAuthToken(r.Context(), strings.ToLower(request.Email), request.Password)
+	token, err := a.authService.CreateAuthToken(r.Context(), strings.ToLower(request.Email), request.Password)
 	if err != nil {
 		if strings.Contains(err.Error(), "invalid email or password") {
 			http.Error(w, "Invalid email or password", http.StatusForbidden)
@@ -41,8 +41,8 @@ func (a *API) PostUsersLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp, err := json.Marshal(PostUsersLoginResponseBody{
-		AccessToken: token,
-		ExpiresAt:   expires.UnixMilli(),
+		AccessToken: token.BearerToken,
+		ExpiresAt:   token.ExpiresAt.UnixMilli(),
 	})
 	if err != nil {
 		log.Printf("Failed marshaling response: %v", err)

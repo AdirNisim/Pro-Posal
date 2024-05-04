@@ -120,7 +120,7 @@ func (s *CompanyManagementServiceImpl) UpdateCompany(ctx context.Context, id str
 	}
 	companyDao.UpdatedAt = time.Now()
 
-	_, err = permission.Update(ctx, s.db.Conn, boil.Infer())
+	_, err = companyDao.Update(ctx, s.db.Conn, boil.Infer())
 	if err != nil {
 		return nil, fmt.Errorf("error updating company: %w", err)
 	}

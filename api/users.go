@@ -73,6 +73,17 @@ func (a *API) GetUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Example - how do fetch the session and filter by context
+	// session := r.Context().Value("session").(*models.Session)
+	// log.Printf("Request is invoked by user %v", session.UserID)
+
+	// var filtered []*models.User
+	// for _, user := range users {
+	// 	if user.ID == session.UserID.String() {
+	// 		filtered = append(filtered, user)
+	// 	}
+	// }
+
 	resp, err := json.Marshal(GetUsersResponseBody{TotalUsers: len(users), Users: users})
 	if err != nil {
 		log.Printf("Failed marshaling response: %v", err)

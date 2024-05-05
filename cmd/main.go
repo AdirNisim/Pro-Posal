@@ -15,7 +15,8 @@ import (
 		premmisionManagment: premmisionManagment,
 		categoryManagment:   categoryManagment,
 		contractManagment:   contractManagment,
-		offerManagment:      offerManagment,*/
+		offerManagment:      offerManagment,
+*/
 
 func main() {
 	db := database.Connect()

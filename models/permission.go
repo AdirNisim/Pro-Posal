@@ -12,6 +12,11 @@ type Permission struct {
 	UpdatedAt  time.Time `json:"updated_at"`
 }
 
+type UserPermission struct {
+	User       User
+	Permission Permission
+}
+
 // When you will implement your authorization middleware
 // Then for each request you will authorize it based on your structure
 // For example, if you are role based

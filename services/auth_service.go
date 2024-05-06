@@ -92,8 +92,8 @@ func (s *authServiceImpl) ValidateAuthToken(ctx context.Context, token string) (
 	// 	return nil, fmt.Errorf("failed parsing expires_at from claims: %w", err)
 	// }
 	session := &models.Session{
-		ID:        uuid.MustParse(claims["session"].(map[string]any)["id"].(string)),
-		UserID:    uuid.MustParse(claims["session"].(map[string]any)["user_id"].(string)),
+		ID:     uuid.MustParse(claims["session"].(map[string]any)["id"].(string)),
+		UserID: uuid.MustParse(claims["session"].(map[string]any)["user_id"].(string)),
 		// CreatedAt: createdAt,
 		// ExpiresAt: expiresAt,
 	}

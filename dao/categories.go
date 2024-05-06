@@ -30,6 +30,7 @@ type Category struct {
 	Description string      `boil:"description" json:"description" toml:"description" yaml:"description"`
 	CreatedAt   time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	UpdatedAt   time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	Type        null.String `boil:"type" json:"type,omitempty" toml:"type" yaml:"type,omitempty"`
 
 	R *categoryR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L categoryL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -42,6 +43,7 @@ var CategoryColumns = struct {
 	Description string
 	CreatedAt   string
 	UpdatedAt   string
+	Type        string
 }{
 	ID:          "id",
 	CompanyID:   "company_id",
@@ -49,6 +51,7 @@ var CategoryColumns = struct {
 	Description: "description",
 	CreatedAt:   "created_at",
 	UpdatedAt:   "updated_at",
+	Type:        "type",
 }
 
 var CategoryTableColumns = struct {
@@ -58,6 +61,7 @@ var CategoryTableColumns = struct {
 	Description string
 	CreatedAt   string
 	UpdatedAt   string
+	Type        string
 }{
 	ID:          "categories.id",
 	CompanyID:   "categories.company_id",
@@ -65,6 +69,7 @@ var CategoryTableColumns = struct {
 	Description: "categories.description",
 	CreatedAt:   "categories.created_at",
 	UpdatedAt:   "categories.updated_at",
+	Type:        "categories.type",
 }
 
 // Generated where
@@ -174,6 +179,7 @@ var CategoryWhere = struct {
 	Description whereHelperstring
 	CreatedAt   whereHelpertime_Time
 	UpdatedAt   whereHelpertime_Time
+	Type        whereHelpernull_String
 }{
 	ID:          whereHelperstring{field: "\"categories\".\"id\""},
 	CompanyID:   whereHelperstring{field: "\"categories\".\"company_id\""},
@@ -181,6 +187,7 @@ var CategoryWhere = struct {
 	Description: whereHelperstring{field: "\"categories\".\"description\""},
 	CreatedAt:   whereHelpertime_Time{field: "\"categories\".\"created_at\""},
 	UpdatedAt:   whereHelpertime_Time{field: "\"categories\".\"updated_at\""},
+	Type:        whereHelpernull_String{field: "\"categories\".\"type\""},
 }
 
 // CategoryRels is where relationship names are stored.
@@ -211,9 +218,9 @@ func (r *categoryR) GetCompany() *Company {
 type categoryL struct{}
 
 var (
-	categoryAllColumns            = []string{"id", "company_id", "category_id", "description", "created_at", "updated_at"}
+	categoryAllColumns            = []string{"id", "company_id", "category_id", "description", "created_at", "updated_at", "type"}
 	categoryColumnsWithoutDefault = []string{"id", "company_id", "description", "created_at", "updated_at"}
-	categoryColumnsWithDefault    = []string{"category_id"}
+	categoryColumnsWithDefault    = []string{"category_id", "type"}
 	categoryPrimaryKeyColumns     = []string{"id"}
 	categoryGeneratedColumns      = []string{}
 )

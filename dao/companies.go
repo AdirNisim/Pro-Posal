@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/friendsofgo/errors"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -30,6 +31,7 @@ type Company struct {
 	LogoBase64 string    `boil:"logo_base64" json:"logo_base64" toml:"logo_base64" yaml:"logo_base64"`
 	CreatedAt  time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	UpdatedAt  time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	DeletedAt  null.Time `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
 
 	R *companyR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L companyL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -43,6 +45,7 @@ var CompanyColumns = struct {
 	LogoBase64 string
 	CreatedAt  string
 	UpdatedAt  string
+	DeletedAt  string
 }{
 	ID:         "id",
 	Name:       "name",
@@ -51,6 +54,7 @@ var CompanyColumns = struct {
 	LogoBase64: "logo_base64",
 	CreatedAt:  "created_at",
 	UpdatedAt:  "updated_at",
+	DeletedAt:  "deleted_at",
 }
 
 var CompanyTableColumns = struct {
@@ -61,6 +65,7 @@ var CompanyTableColumns = struct {
 	LogoBase64 string
 	CreatedAt  string
 	UpdatedAt  string
+	DeletedAt  string
 }{
 	ID:         "companies.id",
 	Name:       "companies.name",
@@ -69,9 +74,34 @@ var CompanyTableColumns = struct {
 	LogoBase64: "companies.logo_base64",
 	CreatedAt:  "companies.created_at",
 	UpdatedAt:  "companies.updated_at",
+	DeletedAt:  "companies.deleted_at",
 }
 
 // Generated where
+
+type whereHelpernull_Time struct{ field string }
+
+func (w whereHelpernull_Time) EQ(x null.Time) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, false, x)
+}
+func (w whereHelpernull_Time) NEQ(x null.Time) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, true, x)
+}
+func (w whereHelpernull_Time) LT(x null.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpernull_Time) LTE(x null.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpernull_Time) GT(x null.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpernull_Time) GTE(x null.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+
+func (w whereHelpernull_Time) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
+func (w whereHelpernull_Time) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
 var CompanyWhere = struct {
 	ID         whereHelperstring
@@ -81,6 +111,7 @@ var CompanyWhere = struct {
 	LogoBase64 whereHelperstring
 	CreatedAt  whereHelpertime_Time
 	UpdatedAt  whereHelpertime_Time
+	DeletedAt  whereHelpernull_Time
 }{
 	ID:         whereHelperstring{field: "\"companies\".\"id\""},
 	Name:       whereHelperstring{field: "\"companies\".\"name\""},
@@ -89,6 +120,7 @@ var CompanyWhere = struct {
 	LogoBase64: whereHelperstring{field: "\"companies\".\"logo_base64\""},
 	CreatedAt:  whereHelpertime_Time{field: "\"companies\".\"created_at\""},
 	UpdatedAt:  whereHelpertime_Time{field: "\"companies\".\"updated_at\""},
+	DeletedAt:  whereHelpernull_Time{field: "\"companies\".\"deleted_at\""},
 }
 
 // CompanyRels is where relationship names are stored.
@@ -159,9 +191,9 @@ func (r *companyR) GetPermissions() PermissionSlice {
 type companyL struct{}
 
 var (
-	companyAllColumns            = []string{"id", "name", "contact_id", "address", "logo_base64", "created_at", "updated_at"}
+	companyAllColumns            = []string{"id", "name", "contact_id", "address", "logo_base64", "created_at", "updated_at", "deleted_at"}
 	companyColumnsWithoutDefault = []string{"id", "name", "contact_id", "address", "logo_base64", "created_at", "updated_at"}
-	companyColumnsWithDefault    = []string{}
+	companyColumnsWithDefault    = []string{"deleted_at"}
 	companyPrimaryKeyColumns     = []string{"id"}
 	companyGeneratedColumns      = []string{}
 )

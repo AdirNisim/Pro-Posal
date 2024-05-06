@@ -11,6 +11,7 @@ import (
 	"github.com/pro-posal/webserver/dao"
 	"github.com/pro-posal/webserver/internal/database"
 	"github.com/pro-posal/webserver/models"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm" // Ensure only this version is used
 )
@@ -45,6 +46,17 @@ func NewCompanyManagementService(db *database.DBConnector) CompanyManagementServ
 }
 
 func (s *CompanyManagementServiceImpl) CreateCompany(ctx context.Context, req CreateCompanyRequest) (*models.Company, error) {
+	existingCompany, err := dao.Companies(
+		qm.Where("name = ? AND contact_id = ?", req.Name, req.ContactID),
+	).One(ctx, s.db.Conn)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+		} else {
+			return nil, fmt.Errorf("error checking if company exists: %w", err)
+		}
+	} else if existingCompany != nil {
+		return nil, fmt.Errorf("company already exists")
+	}
 
 	companyDao := dao.Company{
 		ID:         uuid.NewString(),
@@ -56,26 +68,24 @@ func (s *CompanyManagementServiceImpl) CreateCompany(ctx context.Context, req Cr
 		UpdatedAt:  time.Now(),
 	}
 
-	// TODO: Check if already exists to ensure non-500 errors for idempotency
-
-	err := companyDao.Insert(ctx, s.db.Conn, boil.Infer())
+	err = companyDao.Insert(ctx, s.db.Conn, boil.Infer())
 	if err != nil {
-		return nil, fmt.Errorf("failed inserting user to database: %w", err)
+		return nil, fmt.Errorf("failed to insert company into database: %w", err)
 	}
 
-	premmisionDao := dao.Permission{
+	permissionDao := dao.Permission{
 		ID:         uuid.NewString(),
 		UserID:     companyDao.ContactID,
 		CompanyID:  companyDao.ID,
 		Role:       "Owner",
-		ContractID: "AskAlex",
+		ContractID: "",
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
 	}
 
-	err = premmisionDao.Insert(ctx, s.db.Conn, boil.Infer())
+	err = permissionDao.Insert(ctx, s.db.Conn, boil.Infer())
 	if err != nil {
-		return nil, fmt.Errorf("failed inserting user premmision, company added: %w", err)
+		return nil, fmt.Errorf("failed to insert user permission, company added: %w", err)
 	}
 
 	return companyDaoToCompanyModel(companyDao), nil
@@ -89,12 +99,14 @@ func (s *CompanyManagementServiceImpl) DeleteCompany(ctx context.Context, id str
 		}
 		return nil, fmt.Errorf("error retrieving company: %w", err)
 	}
+	deletedAt := null.TimeFrom(time.Now())
+	companyDao.DeletedAt = deletedAt
 
 	company := companyDaoToCompanyModel(*companyDao)
 
-	_, err = companyDao.Delete(ctx, s.db.Conn)
+	_, err = companyDao.Update(ctx, s.db.Conn, boil.Infer())
 	if err != nil {
-		return nil, fmt.Errorf("error deleting company: %w", err)
+		return nil, fmt.Errorf("error deleteing company: %w", err)
 	}
 
 	return company, nil
@@ -130,6 +142,7 @@ func (s *CompanyManagementServiceImpl) UpdateCompany(ctx context.Context, id str
 
 func (s *CompanyManagementServiceImpl) GetCompanies(ctx context.Context, id string) ([]*models.Company, error) {
 	companiesDaos, err := dao.Companies(
+		qm.Where("companies.deleted_at IS NULL"),
 		qm.InnerJoin("permissions p on p.company_id = companies.id"),
 		qm.Where("p.user_id = ?", id),
 	).All(ctx, s.db.Conn)
@@ -154,5 +167,6 @@ func companyDaoToCompanyModel(companyDao dao.Company) *models.Company {
 		LogoBase64: companyDao.LogoBase64,
 		CreatedAt:  companyDao.CreatedAt,
 		UpdatedAt:  companyDao.UpdatedAt,
+		DeleteAt:   companyDao.DeletedAt.Time,
 	}
 }

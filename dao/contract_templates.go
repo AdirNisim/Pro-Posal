@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/friendsofgo/errors"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -29,6 +30,7 @@ type ContractTemplate struct {
 	Template  string    `boil:"template" json:"template" toml:"template" yaml:"template"`
 	CreatedAt time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	UpdatedAt time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	DeletedAt null.Time `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
 
 	R *contractTemplateR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L contractTemplateL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -41,6 +43,7 @@ var ContractTemplateColumns = struct {
 	Template  string
 	CreatedAt string
 	UpdatedAt string
+	DeletedAt string
 }{
 	ID:        "id",
 	Name:      "name",
@@ -48,6 +51,7 @@ var ContractTemplateColumns = struct {
 	Template:  "template",
 	CreatedAt: "created_at",
 	UpdatedAt: "updated_at",
+	DeletedAt: "deleted_at",
 }
 
 var ContractTemplateTableColumns = struct {
@@ -57,6 +61,7 @@ var ContractTemplateTableColumns = struct {
 	Template  string
 	CreatedAt string
 	UpdatedAt string
+	DeletedAt string
 }{
 	ID:        "contract_templates.id",
 	Name:      "contract_templates.name",
@@ -64,6 +69,7 @@ var ContractTemplateTableColumns = struct {
 	Template:  "contract_templates.template",
 	CreatedAt: "contract_templates.created_at",
 	UpdatedAt: "contract_templates.updated_at",
+	DeletedAt: "contract_templates.deleted_at",
 }
 
 // Generated where
@@ -75,6 +81,7 @@ var ContractTemplateWhere = struct {
 	Template  whereHelperstring
 	CreatedAt whereHelpertime_Time
 	UpdatedAt whereHelpertime_Time
+	DeletedAt whereHelpernull_Time
 }{
 	ID:        whereHelperstring{field: "\"contract_templates\".\"id\""},
 	Name:      whereHelperstring{field: "\"contract_templates\".\"name\""},
@@ -82,6 +89,7 @@ var ContractTemplateWhere = struct {
 	Template:  whereHelperstring{field: "\"contract_templates\".\"template\""},
 	CreatedAt: whereHelpertime_Time{field: "\"contract_templates\".\"created_at\""},
 	UpdatedAt: whereHelpertime_Time{field: "\"contract_templates\".\"updated_at\""},
+	DeletedAt: whereHelpernull_Time{field: "\"contract_templates\".\"deleted_at\""},
 }
 
 // ContractTemplateRels is where relationship names are stored.
@@ -122,9 +130,9 @@ func (r *contractTemplateR) GetOffers() OfferSlice {
 type contractTemplateL struct{}
 
 var (
-	contractTemplateAllColumns            = []string{"id", "name", "company_id", "template", "created_at", "updated_at"}
+	contractTemplateAllColumns            = []string{"id", "name", "company_id", "template", "created_at", "updated_at", "deleted_at"}
 	contractTemplateColumnsWithoutDefault = []string{"id", "name", "company_id", "template", "created_at", "updated_at"}
-	contractTemplateColumnsWithDefault    = []string{}
+	contractTemplateColumnsWithDefault    = []string{"deleted_at"}
 	contractTemplatePrimaryKeyColumns     = []string{"id"}
 	contractTemplateGeneratedColumns      = []string{}
 )

@@ -1,6 +1,6 @@
 -- +goose Up
 -- +goose StatementBegin
-ALTER TABLE categories ADD COLUMN type VARCHAR(255);
+ALTER TABLE categories ADD COLUMN type TEXT NOT NULL;
 -- +goose StatementEnd
 
 -- +goose Down

@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/json"
 	"log"
 	"net/http"
 	"strings"
@@ -49,15 +48,7 @@ func (a *API) PostUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := json.Marshal(user)
-	if err != nil {
-		log.Printf("Failed marshaling response: %v", err)
-		http.Error(w, "Failed marshalling user response object", http.StatusInternalServerError)
-		return
-	}
-
-	w.Write(resp)
-	w.WriteHeader(http.StatusCreated)
+	utils.MarshalAndWriteResponse(w, user)
 }
 
 type GetUsersResponseBody struct {
@@ -73,26 +64,8 @@ func (a *API) GetUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Example - how do fetch the session and filter by context
-	// session := r.Context().Value("session").(*models.Session)
-	// log.Printf("Request is invoked by user %v", session.UserID)
-
-	// var filtered []*models.User
-	// for _, user := range users {
-	// 	if user.ID == session.UserID.String() {
-	// 		filtered = append(filtered, user)
-	// 	}
-	// }
-
-	resp, err := json.Marshal(GetUsersResponseBody{TotalUsers: len(users), Users: users})
-	if err != nil {
-		log.Printf("Failed marshaling response: %v", err)
-		http.Error(w, "Failed marshalling users response object", http.StatusInternalServerError)
-		return
-	}
-
-	w.Write(resp)
-	w.WriteHeader(http.StatusOK)
+	responseBody := GetUsersResponseBody{TotalUsers: len(users), Users: users}
+	utils.MarshalAndWriteResponse(w, responseBody)
 }
 
 func (a *API) GetUser(w http.ResponseWriter, r *http.Request) {
@@ -106,15 +79,7 @@ func (a *API) GetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := json.Marshal(user)
-	if err != nil {
-		log.Printf("Failed marshaling response: %v", err)
-		http.Error(w, "Failed marshalling user response object", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	w.Write(resp)
+	utils.MarshalAndWriteResponse(w, user)
 }
 
 func (a *API) UpdateUserPassword(w http.ResponseWriter, r *http.Request) {
@@ -136,14 +101,30 @@ func (a *API) UpdateUserPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Assuming there's a method to serialize the user back to JSON or some response
-	response, err := json.Marshal(user)
+	utils.MarshalAndWriteResponse(w, user)
+}
+
+func (a *API) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	userID := vars["id"]
+
+	user, err := a.userManagement.DeleteUser(r.Context(), userID)
 	if err != nil {
-		log.Printf("Error marshaling response: %v", err)
-		http.Error(w, "Error preparing response", http.StatusInternalServerError)
+		log.Printf("Error deleting user: %v", err)
+		http.Error(w, "Error deleting user", http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	w.Write(response)
+	utils.MarshalAndWriteResponse(w, user)
 }
+
+// Example - how do fetch the session and filter by context
+// session := r.Context().Value("session").(*models.Session)
+// log.Printf("Request is invoked by user %v", session.UserID)
+
+// var filtered []*models.User
+// for _, user := range users {
+// 	if user.ID == session.UserID.String() {
+// 		filtered = append(filtered, user)
+// 	}
+// }

@@ -33,6 +33,7 @@ type UserManagementService interface {
 	ListUsers(context.Context) ([]*models.User, error)
 	GetUserByID(context.Context, string) (*models.User, error)
 	UpdateUserPassword(context.Context, ChangeUserPasswordRequest) (*models.User, error)
+	DeleteUser(context.Context, string) (*models.User, error)
 }
 
 type userManagementServiceImpl struct {
@@ -117,6 +118,24 @@ func (s *userManagementServiceImpl) UpdateUserPassword(ctx context.Context, req 
 
 	updatedUser := userDaoToUserModel(*userDao)
 	return updatedUser, nil
+}
+
+func (s *userManagementServiceImpl) DeleteUser(ctx context.Context, userId string) (*models.User, error) {
+	userDao, err := dao.FindUser(ctx, s.db.Conn, userId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find user: %w", err)
+	}
+
+	deletedAt := null.TimeFrom(time.Now())
+	userDao.DeletedAt = deletedAt
+
+	_, err = userDao.Update(ctx, s.db.Conn, boil.Infer())
+	if err != nil {
+		return nil, fmt.Errorf("error updating company: %w", err)
+	}
+
+	return userDaoToUserModel(*userDao), nil
+
 }
 
 func userDaoToUserModel(userDao dao.User) *models.User {

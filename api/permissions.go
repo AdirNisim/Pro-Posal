@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/json"
 	"log"
 	"net/http"
 
@@ -18,7 +17,7 @@ type PostPremmisionRequestBody struct {
 	ContractID string `json:"contract_id"`
 }
 
-type PUTPremmisionRequestBody struct {
+type UpdatePremmisionRequestBody struct {
 	Role       string `json:"role"`
 	ContractID string `json:"contract_id"`
 }
@@ -37,7 +36,7 @@ func (a *API) PostPermmision(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	company, err := a.premmisionManagment.CreatePermission(r.Context(), services.CreatePermissionRequest{
+	permission, err := a.premmisionManagment.CreatePermission(r.Context(), services.CreatePermissionRequest{
 		UserID:     request.UserID,
 		CompanyID:  request.CompanyID,
 		Role:       request.Role,
@@ -49,15 +48,7 @@ func (a *API) PostPermmision(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := json.Marshal(company)
-	if err != nil {
-		log.Printf("Failed marshaling response: %v", err)
-		http.Error(w, "Failed marshalling Company response object", http.StatusInternalServerError)
-		return
-	}
-
-	w.Write(resp)
-	w.WriteHeader(http.StatusCreated)
+	utils.MarshalAndWriteResponse(w, permission)
 
 }
 
@@ -71,18 +62,15 @@ func (a *API) GetPermmisions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := json.Marshal(GetUsersPermissionsResponseBody{TotalUsers: len(usersPermissions), UserPermissions: usersPermissions})
-	if err != nil {
-		log.Printf("Failed marshaling response: %v", err)
-		http.Error(w, "Failed marshalling companies response object", http.StatusInternalServerError)
-		return
+	responseBody := GetUsersPermissionsResponseBody{
+		TotalUsers:      len(usersPermissions),
+		UserPermissions: usersPermissions,
 	}
 
-	w.Write(resp)
-	w.WriteHeader(http.StatusOK)
+	utils.MarshalAndWriteResponse(w, responseBody)
 }
 
-func (a *API) DeletePermmision(w http.ResponseWriter, r *http.Request) {
+func (a *API) DeletePermission(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	permissionId := vars["id"]
 
@@ -93,22 +81,14 @@ func (a *API) DeletePermmision(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := json.Marshal(permission)
-	if err != nil {
-		log.Printf("Failed marshaling response: %v", err)
-		http.Error(w, "Failed marshalling Company response object", http.StatusInternalServerError)
-		return
-	}
-
-	w.Write(resp)
-	w.WriteHeader(http.StatusCreated)
+	utils.MarshalAndWriteResponse(w, permission)
 }
 
-func (a *API) UpdatePermmision(w http.ResponseWriter, r *http.Request) {
+func (a *API) UpdatePermission(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	permissionId := vars["id"]
-	var request PUTPremmisionRequestBody
 
+	var request UpdatePremmisionRequestBody
 	err := utils.UnmarshalRequest(r, &request)
 	if err != nil {
 		log.Printf("Error parsing request body: %v", err)
@@ -121,20 +101,11 @@ func (a *API) UpdatePermmision(w http.ResponseWriter, r *http.Request) {
 		Role:       request.Role,
 		ContractID: request.ContractID,
 	})
-
 	if err != nil {
-		log.Printf("Error updating permission: %v", err)
-		http.Error(w, "Error updating permission", http.StatusBadRequest)
+		log.Printf("Error updating a user's permission for company: %v", err)
+		http.Error(w, "Error updating a user's permission for company", http.StatusBadRequest)
 		return
 	}
 
-	resp, err := json.Marshal(permission)
-	if err != nil {
-		log.Printf("Failed marshaling response: %v", err)
-		http.Error(w, "Failed marshalling Company response object", http.StatusInternalServerError)
-		return
-	}
-
-	w.Write(resp)
-	w.WriteHeader(http.StatusCreated)
+	utils.MarshalAndWriteResponse(w, permission)
 }

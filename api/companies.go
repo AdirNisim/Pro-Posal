@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/json"
 	"log"
 	"net/http"
 
@@ -47,16 +46,7 @@ func (a *API) PostCompanies(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := json.Marshal(company)
-	if err != nil {
-		log.Printf("Failed marshaling response: %v", err)
-		http.Error(w, "Failed marshalling Company response object", http.StatusInternalServerError)
-		return
-	}
-
-	w.Write(resp)
-	w.WriteHeader(http.StatusCreated)
-
+	utils.MarshalAndWriteResponse(w, company)
 }
 
 func (a *API) GetCompanies(w http.ResponseWriter, r *http.Request) {
@@ -70,15 +60,10 @@ func (a *API) GetCompanies(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := json.Marshal(GetCompaniesResponseBody{TotalCompanies: len(companies), Companies: companies})
-	if err != nil {
-		log.Printf("Failed marshaling response: %v", err)
-		http.Error(w, "Failed marshalling companies response object", http.StatusInternalServerError)
-		return
-	}
+	responseBody := GetCompaniesResponseBody{TotalCompanies: len(companies), Companies: companies}
 
-	w.Write(resp)
-	w.WriteHeader(http.StatusOK)
+	utils.MarshalAndWriteResponse(w, responseBody)
+
 }
 
 func (a *API) UpdateCompanies(w http.ResponseWriter, r *http.Request) {
@@ -105,13 +90,19 @@ func (a *API) UpdateCompanies(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := json.Marshal(company)
+	utils.MarshalAndWriteResponse(w, company)
+}
+
+func (a *API) DeleteCompany(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	companyId := vars["id"]
+
+	company, err := a.companyManagement.DeleteCompany(r.Context(), companyId)
 	if err != nil {
-		log.Printf("Failed marshaling response: %v", err)
-		http.Error(w, "Failed marshalling Company response object", http.StatusInternalServerError)
+		log.Printf("Error deleting company: %v", err)
+		http.Error(w, "Error deleting company", http.StatusBadRequest)
 		return
 	}
 
-	w.Write(resp)
-	w.WriteHeader(http.StatusOK)
+	utils.MarshalAndWriteResponse(w, company)
 }

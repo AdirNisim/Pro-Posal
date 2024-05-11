@@ -30,11 +30,11 @@ type UpdateCategoryRequest struct {
 
 type CategoryManagementService interface {
 	CreateCategory(ctx context.Context, req CreateCategoryRequest) (*models.Category, error)
+	CreateSub(ctx context.Context, req CreateCategoryRequest) (*models.Category, error)
 	DeleteCategory(ctx context.Context, id string) (*models.Category, error)
 	UpdateCategory(ctx context.Context, id string, req UpdateCategoryRequest) (*models.Category, error)
 	GetCategory(ctx context.Context, companyID string) ([]*models.Category, error)
-	GetSubCategory(ctx context.Context, id string) ([]*models.Category, error)
-	GetDescription(ctx context.Context, id string) ([]*models.Category, error)
+	GetSub(ctx context.Context, id string) ([]*models.Category, error)
 }
 
 type CategoryManagementServiceImpl struct {
@@ -61,7 +61,7 @@ func (s *CategoryManagementServiceImpl) CreateCategory(ctx context.Context, req 
 
 	categoryDao := dao.Category{
 		ID:          uuid.NewString(),
-		CategoryID:  null.String{String: req.CategoryID, Valid: true},
+		CategoryID:  null.String{String: req.CategoryID, Valid: false},
 		Description: req.Description,
 		CompanyID:   req.CompanyID,
 		Type:        req.Type,
@@ -74,6 +74,42 @@ func (s *CategoryManagementServiceImpl) CreateCategory(ctx context.Context, req 
 		return nil, fmt.Errorf("failed to insert category into database: %w", err)
 	}
 	return categoryDaoToCategoryModel(categoryDao), nil
+}
+
+func (s *CategoryManagementServiceImpl) CreateSub(ctx context.Context, req CreateCategoryRequest) (*models.Category, error) {
+	existingCategory, err := dao.Categories(qm.Where("id = ?", req.CategoryID)).One(ctx, s.db.Conn)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("no existing category found: %w", err)
+		} else {
+			return nil, fmt.Errorf("error checking if category exists: %w", err)
+		}
+	} else {
+		existingsub, err := dao.Categories(qm.Where("description= ? AND category_id = ? AND type = ?", req.Description, existingCategory.ID, req.Type)).One(ctx, s.db.Conn)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				// No existing category found; continue to create a new one.
+			} else {
+				return nil, fmt.Errorf("error checking if category exists: %w", err)
+			}
+		} else if existingsub != nil {
+			return nil, fmt.Errorf("category already exists")
+		}
+		categoryDao := dao.Category{
+			ID:          uuid.NewString(),
+			CategoryID:  null.String{String: req.CategoryID, Valid: true},
+			Description: req.Description,
+			CompanyID:   req.CompanyID,
+			Type:        req.Type,
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
+		}
+		err = categoryDao.Insert(ctx, s.db.Conn, boil.Infer())
+		if err != nil {
+			return nil, fmt.Errorf("failed to insert category into database: %w", err)
+		}
+		return categoryDaoToCategoryModel(categoryDao), nil
+	}
 }
 
 func (s *CategoryManagementServiceImpl) UpdateCategory(ctx context.Context, id string, req UpdateCategoryRequest) (*models.Category, error) {
@@ -135,7 +171,7 @@ func (s *CategoryManagementServiceImpl) GetCategory(ctx context.Context, company
 	return categories, nil
 }
 
-func (s *CategoryManagementServiceImpl) GetSubCategory(ctx context.Context, id string) ([]*models.Category, error) {
+func (s *CategoryManagementServiceImpl) GetSub(ctx context.Context, id string) ([]*models.Category, error) {
 	categoryDao, err := dao.Categories(qm.Where("category_id = ?", id)).All(ctx, s.db.Conn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get sub categories from database: %w", err)
@@ -147,25 +183,13 @@ func (s *CategoryManagementServiceImpl) GetSubCategory(ctx context.Context, id s
 	return subcategories, nil
 }
 
-func (s *CategoryManagementServiceImpl) GetDescription(ctx context.Context, id string) ([]*models.Category, error) {
-	categoryDao, err := dao.Categories(qm.Where("company_id = ?", id)).All(ctx, s.db.Conn)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get descriptions from database: %w", err)
-	}
-	var descriptions []*models.Category
-	for _, subcategory := range categoryDao {
-		descriptions = append(descriptions, categoryDaoToCategoryModel(*subcategory))
-	}
-	return descriptions, nil
-
-}
-
 func categoryDaoToCategoryModel(categoryDao dao.Category) *models.Category {
 	return &models.Category{
 		ID:          categoryDao.ID,
 		CompanyID:   categoryDao.CompanyID,
 		CategoryID:  categoryDao.CategoryID.String,
 		Description: categoryDao.Description,
+		Type:        categoryDao.Type,
 		CreatedAt:   categoryDao.CreatedAt,
 		UpdatedAt:   categoryDao.UpdatedAt,
 	}

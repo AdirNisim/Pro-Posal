@@ -111,6 +111,7 @@ func (a *API) NewRouter() http.Handler {
 
 	// categories table
 	// POST /categories/{companyId} -> add a category for company
+	router.HandleFunc("/categories/{companyId}", a.PostCategories).Methods("POST")
 	// POST /categories/{companyId}/{categoryId} ->  add a sub category for company
 	// GET /categories/{companyId} -> get categories for company
 	// GET /categories/{companyId}/{categoryId}  -> Get sub categories of a category of a company

@@ -10,6 +10,7 @@ import (
 )
 
 var AuthBypassRoutes = map[string]string{
+	"/status":      "GET",
 	"/users/login": "POST",
 }
 

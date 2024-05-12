@@ -36,7 +36,7 @@ func (a *API) PostPermmision(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	permission, err := a.premmisionManagment.CreatePermission(r.Context(), services.CreatePermissionRequest{
+	permission, err := a.permissionsManagement.CreatePermission(r.Context(), services.CreatePermissionRequest{
 		UserID:     request.UserID,
 		CompanyID:  request.CompanyID,
 		Role:       request.Role,
@@ -55,7 +55,7 @@ func (a *API) PostPermmision(w http.ResponseWriter, r *http.Request) {
 func (a *API) GetPermmisions(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	companyId := vars["id"]
-	usersPermissions, err := a.premmisionManagment.GetPermissions(r.Context(), companyId)
+	usersPermissions, err := a.permissionsManagement.GetPermissions(r.Context(), companyId)
 	if err != nil {
 		log.Printf("Error getting permissions: %v", err)
 		http.Error(w, "Error getting permissions", http.StatusBadRequest)
@@ -74,7 +74,7 @@ func (a *API) DeletePermission(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	permissionId := vars["id"]
 
-	permission, err := a.premmisionManagment.DeletePermission(r.Context(), permissionId)
+	permission, err := a.permissionsManagement.DeletePermission(r.Context(), permissionId)
 	if err != nil {
 		log.Printf("Error deleting permission: %v", err)
 		http.Error(w, "Error deleting permission", http.StatusBadRequest)
@@ -96,7 +96,7 @@ func (a *API) UpdatePermission(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	permission, err := a.premmisionManagment.UpdatePermission(r.Context(), services.UpdatePermissionRequest{
+	permission, err := a.permissionsManagement.UpdatePermission(r.Context(), services.UpdatePermissionRequest{
 		Id:         permissionId,
 		Role:       request.Role,
 		ContractID: request.ContractID,

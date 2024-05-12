@@ -28,6 +28,7 @@ type UpdateCompanyRequest struct {
 	LogoBase64 string
 }
 
+//go:generate go run github.com/golang/mock/mockgen -package $GOPACKAGE -source=$GOFILE -destination=mock_$GOFILE
 type CompanyManagementService interface {
 	CreateCompany(context.Context, CreateCompanyRequest) (*models.Company, error)
 	DeleteCompany(context.Context, string) (*models.Company, error)

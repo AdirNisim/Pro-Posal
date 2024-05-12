@@ -130,33 +130,41 @@ func (s *CategoryManagementServiceImpl) UpdateCategory(ctx context.Context, id s
 }
 
 func (s *CategoryManagementServiceImpl) DeleteCategory(ctx context.Context, id string) (*models.Category, error) {
-	categoryDao, err := dao.Categories(qm.Where("id = ?", id)).One(ctx, s.db.Conn)
+	categoriesDao, err := dao.Categories(
+		qm.Where("id = ? OR category_id = ?", id, id),
+	).All(ctx, s.db.Conn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get category from database: %w", err)
 	}
-	if categoryDao == nil {
-		return nil, fmt.Errorf("category not found")
-	}
-	if categoryDao.Type == "description" {
-		return s.deleteCategoryHelper(ctx, categoryDao)
-	} else {
-		subDao, err := dao.Categories(qm.Where("category_id = ?", categoryDao.ID)).All(ctx, s.db.Conn)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get sub categories from database: %w", err)
-		}
-		for _, sub := range subDao {
-			s.DeleteCategory(ctx, sub.ID)
-		}
-	}
-	return s.deleteCategoryHelper(ctx, categoryDao)
-}
 
-func (s *CategoryManagementServiceImpl) deleteCategoryHelper(ctx context.Context, categoryDao *dao.Category) (*models.Category, error) {
-	_, err := categoryDao.Delete(ctx, s.db.Conn)
-	if err != nil {
-		return nil, fmt.Errorf("failed to delete category from database: %w", err)
+	var parentCategory *models.Category
+	categoryIDsToDelete := make([]string, 0)
+	for _, category := range categoriesDao {
+		if category.ID == id {
+			parentCategory = categoryDaoToCategoryModel(*category)
+		}
+		categoryIDsToDelete = append(categoryIDsToDelete, category.ID)
 	}
-	return categoryDaoToCategoryModel(*categoryDao), nil
+
+	categoriesDao, err = dao.Categories(
+		qm.Where("category_id IN ?", categoryIDsToDelete),
+	).All(ctx, s.db.Conn)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get sub categories and descriptions from database: %w", err)
+	}
+
+	for _, category := range categoriesDao {
+		categoryIDsToDelete = append(categoryIDsToDelete, category.ID)
+	}
+
+	_, err = dao.Categories(
+		qm.Where("id IN ?", categoryIDsToDelete),
+	).DeleteAll(ctx, s.db.Conn)
+	if err != nil {
+		return nil, fmt.Errorf("failed to delete categories from database: %w", err)
+	}
+
+	return parentCategory, nil
 }
 
 func (s *CategoryManagementServiceImpl) GetCategory(ctx context.Context, companyID string) ([]*models.Category, error) {
@@ -189,7 +197,7 @@ func categoryDaoToCategoryModel(categoryDao dao.Category) *models.Category {
 		CompanyID:   categoryDao.CompanyID,
 		CategoryID:  categoryDao.CategoryID.String,
 		Description: categoryDao.Description,
-		Type:        categoryDao.Type,
+		Type:        models.CategoryType(categoryDao.Type),
 		CreatedAt:   categoryDao.CreatedAt,
 		UpdatedAt:   categoryDao.UpdatedAt,
 	}

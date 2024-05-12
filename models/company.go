@@ -10,4 +10,5 @@ type Company struct {
 	LogoBase64 string    `json:"logo_base64"`
 	CreatedAt  time.Time `json:"created_at"`
 	UpdatedAt  time.Time `json:"updated_at"`
+	DeleteAt   time.Time `json:"deleted_at"`
 }

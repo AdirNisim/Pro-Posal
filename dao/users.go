@@ -34,6 +34,7 @@ type User struct {
 	InvitedBy    null.String `boil:"invited_by" json:"invited_by,omitempty" toml:"invited_by" yaml:"invited_by,omitempty"`
 	CreatedAt    time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	UpdatedAt    time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	DeletedAt    null.Time   `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
 
 	R *userR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L userL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -50,6 +51,7 @@ var UserColumns = struct {
 	InvitedBy    string
 	CreatedAt    string
 	UpdatedAt    string
+	DeletedAt    string
 }{
 	ID:           "id",
 	FirstName:    "first_name",
@@ -61,6 +63,7 @@ var UserColumns = struct {
 	InvitedBy:    "invited_by",
 	CreatedAt:    "created_at",
 	UpdatedAt:    "updated_at",
+	DeletedAt:    "deleted_at",
 }
 
 var UserTableColumns = struct {
@@ -74,6 +77,7 @@ var UserTableColumns = struct {
 	InvitedBy    string
 	CreatedAt    string
 	UpdatedAt    string
+	DeletedAt    string
 }{
 	ID:           "users.id",
 	FirstName:    "users.first_name",
@@ -85,6 +89,7 @@ var UserTableColumns = struct {
 	InvitedBy:    "users.invited_by",
 	CreatedAt:    "users.created_at",
 	UpdatedAt:    "users.updated_at",
+	DeletedAt:    "users.deleted_at",
 }
 
 // Generated where
@@ -100,6 +105,7 @@ var UserWhere = struct {
 	InvitedBy    whereHelpernull_String
 	CreatedAt    whereHelpertime_Time
 	UpdatedAt    whereHelpertime_Time
+	DeletedAt    whereHelpernull_Time
 }{
 	ID:           whereHelperstring{field: "\"users\".\"id\""},
 	FirstName:    whereHelperstring{field: "\"users\".\"first_name\""},
@@ -111,6 +117,7 @@ var UserWhere = struct {
 	InvitedBy:    whereHelpernull_String{field: "\"users\".\"invited_by\""},
 	CreatedAt:    whereHelpertime_Time{field: "\"users\".\"created_at\""},
 	UpdatedAt:    whereHelpertime_Time{field: "\"users\".\"updated_at\""},
+	DeletedAt:    whereHelpernull_Time{field: "\"users\".\"deleted_at\""},
 }
 
 // UserRels is where relationship names are stored.
@@ -171,9 +178,9 @@ func (r *userR) GetPermissions() PermissionSlice {
 type userL struct{}
 
 var (
-	userAllColumns            = []string{"id", "first_name", "last_name", "phone", "email", "email_hash", "password_hash", "invited_by", "created_at", "updated_at"}
+	userAllColumns            = []string{"id", "first_name", "last_name", "phone", "email", "email_hash", "password_hash", "invited_by", "created_at", "updated_at", "deleted_at"}
 	userColumnsWithoutDefault = []string{"id", "first_name", "last_name", "phone", "email", "email_hash", "password_hash", "created_at", "updated_at"}
-	userColumnsWithDefault    = []string{"invited_by"}
+	userColumnsWithDefault    = []string{"invited_by", "deleted_at"}
 	userPrimaryKeyColumns     = []string{"id"}
 	userGeneratedColumns      = []string{}
 )
@@ -1487,4 +1494,3 @@ func UserExists(ctx context.Context, exec boil.ContextExecutor, iD string) (bool
 func (o *User) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, error) {
 	return UserExists(ctx, exec, o.ID)
 }
-

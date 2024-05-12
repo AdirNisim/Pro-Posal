@@ -7,14 +7,18 @@ var TableNames = struct {
 	Categories        string
 	Companies         string
 	ContractTemplates string
+	GooseDBVersion    string
 	Offers            string
 	Permissions       string
+	Session           string
 	Users             string
 }{
 	Categories:        "categories",
 	Companies:         "companies",
 	ContractTemplates: "contract_templates",
+	GooseDBVersion:    "goose_db_version",
 	Offers:            "offers",
 	Permissions:       "permissions",
+	Session:           "session",
 	Users:             "users",
 }

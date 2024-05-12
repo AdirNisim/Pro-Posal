@@ -30,6 +30,8 @@ type Category struct {
 	Description string      `boil:"description" json:"description" toml:"description" yaml:"description"`
 	CreatedAt   time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	UpdatedAt   time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	Type        string      `boil:"type" json:"type" toml:"type" yaml:"type"`
+	DeletedAt   null.Time   `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
 
 	R *categoryR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L categoryL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -42,6 +44,8 @@ var CategoryColumns = struct {
 	Description string
 	CreatedAt   string
 	UpdatedAt   string
+	Type        string
+	DeletedAt   string
 }{
 	ID:          "id",
 	CompanyID:   "company_id",
@@ -49,6 +53,8 @@ var CategoryColumns = struct {
 	Description: "description",
 	CreatedAt:   "created_at",
 	UpdatedAt:   "updated_at",
+	Type:        "type",
+	DeletedAt:   "deleted_at",
 }
 
 var CategoryTableColumns = struct {
@@ -58,6 +64,8 @@ var CategoryTableColumns = struct {
 	Description string
 	CreatedAt   string
 	UpdatedAt   string
+	Type        string
+	DeletedAt   string
 }{
 	ID:          "categories.id",
 	CompanyID:   "categories.company_id",
@@ -65,6 +73,8 @@ var CategoryTableColumns = struct {
 	Description: "categories.description",
 	CreatedAt:   "categories.created_at",
 	UpdatedAt:   "categories.updated_at",
+	Type:        "categories.type",
+	DeletedAt:   "categories.deleted_at",
 }
 
 // Generated where
@@ -167,6 +177,30 @@ func (w whereHelpertime_Time) GTE(x time.Time) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.GTE, x)
 }
 
+type whereHelpernull_Time struct{ field string }
+
+func (w whereHelpernull_Time) EQ(x null.Time) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, false, x)
+}
+func (w whereHelpernull_Time) NEQ(x null.Time) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, true, x)
+}
+func (w whereHelpernull_Time) LT(x null.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpernull_Time) LTE(x null.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpernull_Time) GT(x null.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpernull_Time) GTE(x null.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+
+func (w whereHelpernull_Time) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
+func (w whereHelpernull_Time) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
+
 var CategoryWhere = struct {
 	ID          whereHelperstring
 	CompanyID   whereHelperstring
@@ -174,6 +208,8 @@ var CategoryWhere = struct {
 	Description whereHelperstring
 	CreatedAt   whereHelpertime_Time
 	UpdatedAt   whereHelpertime_Time
+	Type        whereHelperstring
+	DeletedAt   whereHelpernull_Time
 }{
 	ID:          whereHelperstring{field: "\"categories\".\"id\""},
 	CompanyID:   whereHelperstring{field: "\"categories\".\"company_id\""},
@@ -181,6 +217,8 @@ var CategoryWhere = struct {
 	Description: whereHelperstring{field: "\"categories\".\"description\""},
 	CreatedAt:   whereHelpertime_Time{field: "\"categories\".\"created_at\""},
 	UpdatedAt:   whereHelpertime_Time{field: "\"categories\".\"updated_at\""},
+	Type:        whereHelperstring{field: "\"categories\".\"type\""},
+	DeletedAt:   whereHelpernull_Time{field: "\"categories\".\"deleted_at\""},
 }
 
 // CategoryRels is where relationship names are stored.
@@ -211,9 +249,9 @@ func (r *categoryR) GetCompany() *Company {
 type categoryL struct{}
 
 var (
-	categoryAllColumns            = []string{"id", "company_id", "category_id", "description", "created_at", "updated_at"}
-	categoryColumnsWithoutDefault = []string{"id", "company_id", "description", "created_at", "updated_at"}
-	categoryColumnsWithDefault    = []string{"category_id"}
+	categoryAllColumns            = []string{"id", "company_id", "category_id", "description", "created_at", "updated_at", "type", "deleted_at"}
+	categoryColumnsWithoutDefault = []string{"id", "company_id", "description", "created_at", "updated_at", "type"}
+	categoryColumnsWithDefault    = []string{"category_id", "deleted_at"}
 	categoryPrimaryKeyColumns     = []string{"id"}
 	categoryGeneratedColumns      = []string{}
 )

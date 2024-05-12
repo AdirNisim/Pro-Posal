@@ -69,34 +69,59 @@ func (a *API) NewRouter() http.Handler {
 	router.HandleFunc("/users/{id}", a.GetUser).Methods("GET")
 	// PATCH /users/updatePassword - update the users password
 	router.HandleFunc("/users/updatePassword", a.UpdateUserPassword).Methods("PATCH")
+	// Delete /users/{id} - Delete user
+	router.HandleFunc("/users/{id}", a.DeleteUser).Methods("DELETE")
 
 	// companies table
+	// POST /companies - Create a new company
 	router.HandleFunc("/companies", a.PostCompanies).Methods("POST")
+	// GET /companies - User ID input List all companies
 	router.HandleFunc("/companies/{id}", a.GetCompanies).Methods("GET")
+	// PUT /companies/{id} - Company Id input Update company information
 	router.HandleFunc("/companies/{id}", a.UpdateCompanies).Methods("PUT")
-
-	// DELETE /companies/{companyID} -> Delete comapny from user
-
-	// templates table
-	// POST /contractsTemplates/{companyId} -> Post a  Compnay contract Template
-	// GET //contractsTemplates/{companyId} -> Get All Company contracts templates
-	// PUT /contractsTemplates/{companyId}/{contractTemplateID} -> Update contract template info
-	// DELETE //contractsTemplates/{companyId}/{contractTemplateID} -> delete specic contract templates
-
-	// categories table
-	// POST /categories/{companyId} -> add a category for company
-	// POST /categories/{companyId}/{categoryId} ->  add a sub category for company
-	// GET /categories/{companyId} -> get categories for company
-	// GET /categories/{companyId}/{categoryId}  -> Get sub categories of a category of a company
-	// PUT /categories/{companyId}/{categoryId}/{ID} -> update sub category information
-	// PUT /categories/{companyId}/{categoryID} -> update category id
+	// DELETE /companies/{id} - Company Id input Delete company
+	router.HandleFunc("/companies/{id}", a.DeleteCompany).Methods("DELETE")
 
 	// premmisions table
 	// POST /premmisions/-> post a premmisions for company and email
 	router.HandleFunc("/premmision/{id}", a.PostPermmision).Methods("POST")
 	// GET //premmisions/{companyId} -> Get All Company users premmisions
-	// PUT /premmisions/{companyId}/{userId} -> update a premmision of user under specific company
-	// DELETEPUT /premmisions/{companyId}/{userId} -> delete specic contract templates
+	router.HandleFunc("/premmision/{id}", a.GetPermmisions).Methods("GET")
+	// PUT /premmision/{id} -> Update premmision info
+	router.HandleFunc("/premmision/{id}", a.UpdatePermission).Methods("PUT")
+	// DELETE /premmision/{id} -> delete premmision
+	router.HandleFunc("/premmision/{id}", a.DeletePermission).Methods("DELETE")
+
+	// DELETE /companies/{companyID} -> Delete comapny from user
+
+	// templates table
+	// POST /contractsTemplates/{companyId} -> Post a  Compnay contract Template
+	router.HandleFunc("/contractsTemplates/{companyId}", a.PostContractsTemplates).Methods("POST")
+	// GET //contractsTemplates/{companyId} -> Get All Company contracts templates
+	router.HandleFunc("/contractsTemplates/{companyId}", a.GetContractsTemplates).Methods("GET")
+	// GET //contractsTemplates/{companyId}/{contractTemplateID} -> Get specific contract templates
+	router.HandleFunc("/contractsTemplates/{id}", a.GetContractsTemplate).Methods("GET")
+	// PUT /contractsTemplates/{companyId}/{contractTemplateID} -> Update contract template info
+	router.HandleFunc("/contractsTemplates/{id}", a.UpdateContractsTemplates).Methods("PUT")
+	// DELETE //contractsTemplates/{contractTemplateID} -> delete specic contract templates
+	router.HandleFunc("/contractsTemplates/{id}", a.DeleteContractsTemplates).Methods("DELETE")
+
+	// PUT /contractsTemplates/{companyId}/{contractTemplateID} -> Update contract template info
+	// DELETE //contractsTemplates/{companyId}/{contractTemplateID} -> delete specic contract templates
+
+	// categories table
+	// POST /categories/{companyId} -> add a category for company
+	router.HandleFunc("/categories", a.PostCategories).Methods("POST")
+	// POST /categories/{companyId}/{categoryId} ->  add a sub_category of description.
+	router.HandleFunc("/categories/{categoryId}", a.PostSub).Methods("POST")
+	// GET /categories/{companyId} -> get categories for company
+	router.HandleFunc("/categories/{companyId}", a.GetCategories).Methods("GET")
+	// GET /categories/{companyId}/{categoryId}  -> Get sub_categories or description
+	router.HandleFunc("/categories/{categoryId}", a.GetSubCategories).Methods("GET")
+	// PUT /categories/{companyId}/{categoryId}/{ID} -> update sub category information
+	router.HandleFunc("/categories/{ID}", a.PutCategories).Methods("PUT")
+	// DELETE /categories/{companyId}/{categoryId}/{ID} -> delete sub category
+	router.HandleFunc("/categories/{ID}", a.DeleteCategories).Methods("DELETE")
 
 	return router
 }

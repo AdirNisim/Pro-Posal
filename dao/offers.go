@@ -40,6 +40,7 @@ type Offer struct {
 	RejectionReason    null.String `boil:"rejection_reason" json:"rejection_reason,omitempty" toml:"rejection_reason" yaml:"rejection_reason,omitempty"`
 	CreatedAt          time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	UpdatedAt          time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	DeletedAt          null.Time   `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
 
 	R *offerR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L offerL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -61,6 +62,7 @@ var OfferColumns = struct {
 	RejectionReason    string
 	CreatedAt          string
 	UpdatedAt          string
+	DeletedAt          string
 }{
 	ID:                 "id",
 	CreatedBy:          "created_by",
@@ -77,6 +79,7 @@ var OfferColumns = struct {
 	RejectionReason:    "rejection_reason",
 	CreatedAt:          "created_at",
 	UpdatedAt:          "updated_at",
+	DeletedAt:          "deleted_at",
 }
 
 var OfferTableColumns = struct {
@@ -95,6 +98,7 @@ var OfferTableColumns = struct {
 	RejectionReason    string
 	CreatedAt          string
 	UpdatedAt          string
+	DeletedAt          string
 }{
 	ID:                 "offers.id",
 	CreatedBy:          "offers.created_by",
@@ -111,6 +115,7 @@ var OfferTableColumns = struct {
 	RejectionReason:    "offers.rejection_reason",
 	CreatedAt:          "offers.created_at",
 	UpdatedAt:          "offers.updated_at",
+	DeletedAt:          "offers.deleted_at",
 }
 
 // Generated where
@@ -136,30 +141,6 @@ func (w whereHelpertypes_JSON) GTE(x types.JSON) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.GTE, x)
 }
 
-type whereHelpernull_Time struct{ field string }
-
-func (w whereHelpernull_Time) EQ(x null.Time) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, false, x)
-}
-func (w whereHelpernull_Time) NEQ(x null.Time) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, true, x)
-}
-func (w whereHelpernull_Time) LT(x null.Time) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LT, x)
-}
-func (w whereHelpernull_Time) LTE(x null.Time) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LTE, x)
-}
-func (w whereHelpernull_Time) GT(x null.Time) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GT, x)
-}
-func (w whereHelpernull_Time) GTE(x null.Time) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GTE, x)
-}
-
-func (w whereHelpernull_Time) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
-func (w whereHelpernull_Time) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
-
 var OfferWhere = struct {
 	ID                 whereHelperstring
 	CreatedBy          whereHelperstring
@@ -176,6 +157,7 @@ var OfferWhere = struct {
 	RejectionReason    whereHelpernull_String
 	CreatedAt          whereHelpertime_Time
 	UpdatedAt          whereHelpertime_Time
+	DeletedAt          whereHelpernull_Time
 }{
 	ID:                 whereHelperstring{field: "\"offers\".\"id\""},
 	CreatedBy:          whereHelperstring{field: "\"offers\".\"created_by\""},
@@ -192,6 +174,7 @@ var OfferWhere = struct {
 	RejectionReason:    whereHelpernull_String{field: "\"offers\".\"rejection_reason\""},
 	CreatedAt:          whereHelpertime_Time{field: "\"offers\".\"created_at\""},
 	UpdatedAt:          whereHelpertime_Time{field: "\"offers\".\"updated_at\""},
+	DeletedAt:          whereHelpernull_Time{field: "\"offers\".\"deleted_at\""},
 }
 
 // OfferRels is where relationship names are stored.
@@ -252,9 +235,9 @@ func (r *offerR) GetCustomer() *User {
 type offerL struct{}
 
 var (
-	offerAllColumns            = []string{"id", "created_by", "customer_id", "company_id", "contract_template_id", "arguments", "finalized_offer", "finalized_at", "sent_at", "opened_at", "accepted_at", "rejected_at", "rejection_reason", "created_at", "updated_at"}
+	offerAllColumns            = []string{"id", "created_by", "customer_id", "company_id", "contract_template_id", "arguments", "finalized_offer", "finalized_at", "sent_at", "opened_at", "accepted_at", "rejected_at", "rejection_reason", "created_at", "updated_at", "deleted_at"}
 	offerColumnsWithoutDefault = []string{"id", "created_by", "customer_id", "company_id", "contract_template_id", "arguments", "finalized_at", "created_at", "updated_at"}
-	offerColumnsWithDefault    = []string{"finalized_offer", "sent_at", "opened_at", "accepted_at", "rejected_at", "rejection_reason"}
+	offerColumnsWithDefault    = []string{"finalized_offer", "sent_at", "opened_at", "accepted_at", "rejected_at", "rejection_reason", "deleted_at"}
 	offerPrimaryKeyColumns     = []string{"id"}
 	offerGeneratedColumns      = []string{}
 )

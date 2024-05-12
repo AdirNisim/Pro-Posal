@@ -11,17 +11,10 @@ import (
 	"github.com/pro-posal/webserver/services"
 )
 
-/*		companyManagement:   companyManagementService,
-		premmisionManagment: premmisionManagment,
-		categoryManagment:   categoryManagment,
-		contractManagment:   contractManagment,
-		offerManagment:      offerManagment,*/
-
 func main() {
 	db := database.Connect()
 	defer db.Conn.Close()
 
-	// Initialize router (for different api routes)
 	ums := services.NewUserManagementService(db)
 	auth := services.NewAuthService(db)
 	cms := services.NewCompanyManagementService(db)

@@ -13,3 +13,16 @@ dao-gen: run-db
 .PHONY: db-connect
 db-connect:
 	PGPASSWORD=Aa123456 psql -h localhost -p 5432 -U admin pro-posal
+
+.PHONY: db-down
+db-down:
+	goose -dir=./migrations postgres "host=localhost user=admin dbname=pro-posal sslmode=disable password=Aa123456" down
+
+.PHONY: db-reset
+db-reset:
+	goose -dir=./migrations postgres "host=localhost user=admin dbname=pro-posal sslmode=disable password=Aa123456" down-to 0
+
+
+.PHONY:	db-up
+db-up:
+	goose -dir=./migrations postgres "host=localhost user=admin dbname=pro-posal sslmode=disable password=Aa123456" up

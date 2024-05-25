@@ -36,8 +36,9 @@ func (a *API) PostCompanies(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	company, err := a.companyManagement.CreateCompany(r.Context(), services.CreateCompanyRequest{
-		Name:       request.Name,
-		ContactID:  request.ContactID,
+		Name: request.Name,
+		// ContactID:  request.ContactID, // TODO: do you really need it from the request?
+		ContactID:  utils.GetUserIDFromSession(r).String(),
 		Address:    request.Address,
 		LogoBase64: request.LogoBase64})
 	if err != nil {

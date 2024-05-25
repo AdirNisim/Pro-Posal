@@ -12,14 +12,14 @@ import (
 )
 
 type API struct {
-	db                  *database.DBConnector
-	userManagement      services.UserManagementService
-	authService         services.AuthService
-	companyManagement   services.CompanyManagementService
-	premmisionManagment services.PermissionManagementService
-	categoryManagment   services.CategoryManagementService
-	contractManagment   services.ContractTemplateManagementService
-	offerManagment      services.OfferManagementService
+	db                    *database.DBConnector
+	userManagement        services.UserManagementService
+	authService           services.AuthService
+	companyManagement     services.CompanyManagementService
+	permissionsManagement services.PermissionManagementService
+	categoryManagment     services.CategoryManagementService
+	contractManagment     services.ContractTemplateManagementService
+	offerManagment        services.OfferManagementService
 }
 
 func NewAPI(
@@ -27,21 +27,21 @@ func NewAPI(
 	userManagementService services.UserManagementService,
 	authService services.AuthService,
 	companyManagementService services.CompanyManagementService,
-	premmisionManagment services.PermissionManagementService,
+	permissionsManagement services.PermissionManagementService,
 	categoryManagment services.CategoryManagementService,
 	contractManagment services.ContractTemplateManagementService,
 	offerManagment services.OfferManagementService,
 
 ) *API {
 	return &API{
-		db:                  db,
-		userManagement:      userManagementService,
-		authService:         authService,
-		companyManagement:   companyManagementService,
-		premmisionManagment: premmisionManagment,
-		categoryManagment:   categoryManagment,
-		contractManagment:   contractManagment,
-		offerManagment:      offerManagment,
+		db:                    db,
+		userManagement:        userManagementService,
+		authService:           authService,
+		companyManagement:     companyManagementService,
+		permissionsManagement: permissionsManagement,
+		categoryManagment:     categoryManagment,
+		contractManagment:     contractManagment,
+		offerManagment:        offerManagment,
 	}
 }
 
@@ -84,13 +84,13 @@ func (a *API) NewRouter() http.Handler {
 
 	// premmisions table
 	// POST /premmisions/-> post a premmisions for company and email
-	router.HandleFunc("/premmision/{id}", a.PostPermmision).Methods("POST")
+	router.HandleFunc("/permissions/{id}", a.PostPermmision).Methods("POST")
 	// GET //premmisions/{companyId} -> Get All Company users premmisions
-	router.HandleFunc("/premmision/{id}", a.GetPermmisions).Methods("GET")
+	router.HandleFunc("/permissions/{id}", a.GetPermmisions).Methods("GET")
 	// PUT /premmision/{id} -> Update premmision info
-	router.HandleFunc("/premmision/{id}", a.UpdatePermission).Methods("PUT")
+	router.HandleFunc("/permissions/{id}", a.UpdatePermission).Methods("PUT")
 	// DELETE /premmision/{id} -> delete premmision
-	router.HandleFunc("/premmision/{id}", a.DeletePermission).Methods("DELETE")
+	router.HandleFunc("/permissions/{id}", a.DeletePermission).Methods("DELETE")
 
 	// DELETE /companies/{companyID} -> Delete comapny from user
 
@@ -119,9 +119,9 @@ func (a *API) NewRouter() http.Handler {
 	// GET /categories/{companyId}/{categoryId}  -> Get sub_categories or description
 	router.HandleFunc("/categories/{categoryId}", a.GetSubCategories).Methods("GET")
 	// PUT /categories/{companyId}/{categoryId}/{ID} -> update sub category information
-	router.HandleFunc("/categories/{ID}", a.PutCategories).Methods("PUT")
+	router.HandleFunc("/categories/{id}", a.PutCategories).Methods("PUT")
 	// DELETE /categories/{companyId}/{categoryId}/{ID} -> delete sub category
-	router.HandleFunc("/categories/{ID}", a.DeleteCategories).Methods("DELETE")
+	router.HandleFunc("/categories/{id}", a.DeleteCategories).Methods("DELETE")
 
 	return router
 }

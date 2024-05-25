@@ -7,6 +7,8 @@ import (
 
 var AppConfig Config
 
+const DEFAULT_AUTH_EXPIRATION_TIME_MINUTES = "5"
+
 type Config struct {
 	Database Database
 	Server   Server
@@ -51,7 +53,7 @@ func (d *Database) loadConfig() {
 }
 
 func (a *Auth) loadConfig() {
-	expirationTimeStr := os.Getenv("AUTH_EXPIRATION_TIME_MIN")
+	expirationTimeStr := getValueOrDefault("AUTH_EXPIRATION_TIME_MIN", DEFAULT_AUTH_EXPIRATION_TIME_MINUTES)
 	expirationTime, err := strconv.Atoi(expirationTimeStr)
 	if err != nil {
 		panic("Invalid AUTH_EXPIRATION_TIME_MIN")
@@ -59,4 +61,12 @@ func (a *Auth) loadConfig() {
 	a.ExpirationTimeMinutes = expirationTime
 
 	a.JWTSigningSecret = os.Getenv("JWT_SIGNING_SECRET")
+}
+
+func getValueOrDefault(keyName string, defaultValue string) string {
+	value := os.Getenv(keyName)
+	if value == "" {
+		return defaultValue
+	}
+	return value
 }

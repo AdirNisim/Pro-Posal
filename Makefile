@@ -2,6 +2,10 @@
 
 SHELL=/bin/bash
 
+.PHONY: run-tests
+run-tests:
+	go test -v ./...
+
 .PHONY: run-db
 run-db:
 	docker-compose up -d --build

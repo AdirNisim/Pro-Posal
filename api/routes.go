@@ -54,6 +54,9 @@ func (a *API) NewRouter() http.Handler {
 	router.Use(func(h http.Handler) http.Handler {
 		return middlewares.AuthenticationMiddleware(a.authService, h)
 	})
+	router.Use(func(h http.Handler) http.Handler {
+		return middlewares.AuthorizationMiddleware(a.authService, h)
+	})
 
 	// Check API status
 	router.HandleFunc("/status", a.handleGetStatus).Methods("GET")
@@ -76,9 +79,9 @@ func (a *API) NewRouter() http.Handler {
 	// POST /companies - Create a new company
 	router.HandleFunc("/companies", a.PostCompanies).Methods("POST")
 	// GET /companies - User ID input List all companies
-	router.HandleFunc("/companies/{id}", a.GetCompanies).Methods("GET")
+	router.HandleFunc("/companies/{companyId}", a.GetCompanies).Methods("GET")
 	// PUT /companies/{id} - Company Id input Update company information
-	router.HandleFunc("/companies/{id}", a.UpdateCompanies).Methods("PUT")
+	router.HandleFunc("/companies/{companyId}", a.UpdateCompanies).Methods("PUT")
 	// DELETE /companies/{id} - Company Id input Delete company
 	router.HandleFunc("/companies/{id}", a.DeleteCompany).Methods("DELETE")
 
@@ -95,12 +98,15 @@ func (a *API) NewRouter() http.Handler {
 	// DELETE /companies/{companyID} -> Delete comapny from user
 
 	// templates table
+
+	// TODO: Fix the rest of the routes and adjust the var names within the handlers
+
 	// POST /contractsTemplates/{companyId} -> Post a  Compnay contract Template
-	router.HandleFunc("/contractsTemplates/{companyId}", a.PostContractsTemplates).Methods("POST")
+	router.HandleFunc("/companies/{companyId}/contracts", a.PostContractsTemplates).Methods("POST")
 	// GET //contractsTemplates/{companyId} -> Get All Company contracts templates
-	router.HandleFunc("/contractsTemplates/{companyId}", a.GetContractsTemplates).Methods("GET")
+	router.HandleFunc("/companies/{companyId}/contracts", a.GetContractsTemplates).Methods("GET")
 	// GET //contractsTemplates/{companyId}/{contractTemplateID} -> Get specific contract templates
-	router.HandleFunc("/contractsTemplates/{id}", a.GetContractsTemplate).Methods("GET")
+	router.HandleFunc("/companies/{companyId}/contracts/{contractId}", a.GetContractsTemplate).Methods("GET")
 	// PUT /contractsTemplates/{companyId}/{contractTemplateID} -> Update contract template info
 	router.HandleFunc("/contractsTemplates/{id}", a.UpdateContractsTemplates).Methods("PUT")
 	// DELETE //contractsTemplates/{contractTemplateID} -> delete specic contract templates

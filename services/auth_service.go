@@ -16,9 +16,19 @@ import (
 	"github.com/pro-posal/webserver/models"
 )
 
+type UnauthorizedError struct{}
+
+func (u *UnauthorizedError) Error() string {
+	return "Unauthorized"
+}
+
 type AuthService interface {
 	CreateAuthToken(ctx context.Context, email string, password string) (*models.AuthToken, error)
 	ValidateAuthToken(context.Context, string) (*models.Session, error)
+
+	AuthorizeCompany(method string, callerUserID uuid.UUID, permissions []*models.Permission, hasMoreParts bool, requestedCompanyId string) error
+	AuthorizeContract(method string, callerUserID uuid.UUID, permissions []*models.Permission, hasMoreParts bool, requestedCompanyId string, requestedContractId string) error
+	// AuthorizeUser(method string, callerUserID uuid.UUID, requestedUserId string) error
 }
 
 type authServiceImpl struct {
@@ -123,4 +133,84 @@ func (s *authServiceImpl) createTokenFromSession(_ context.Context, session *mod
 		BearerToken: bearerToken,
 		ExpiresAt:   session.ExpiresAt,
 	}, nil
+}
+
+func (s *authServiceImpl) AuthorizeCompany(method string, callerUserID uuid.UUID, permissions []*models.Permission, hasMoreParts bool, requestedCompanyId string) error {
+	// Example for DB table entries
+	// | user_id | role | company_id | contract_id
+	// | blah1   | admin | - | -
+	// | blah2   | company_admin | company1 | -
+	// | blah2   | company_project_manager | company5 | -
+	// | blah3   | company_contributor | company1 | -
+	// | blah4   | prospect | company1 | contract1
+	// | blah4   | prospect | company1 | contract2
+
+	if method == "POST" {
+		// POST /companies/{companyId}/contracts
+		// POST /companies/{companyId}/categories
+		if hasMoreParts {
+			return callerHasRolesForCompanyById(requestedCompanyId, permissions, models.CompanyAdminRole, models.CompanyProjectManagerRole, models.CompanyContributorRole)
+		}
+
+		// POST /companies
+		return &UnauthorizedError{}
+	}
+
+	if method == "PUT" {
+		// PUT /companies/{companyId}/contracts/{contractId}
+		if hasMoreParts {
+			return callerHasRolesForCompanyById(requestedCompanyId, permissions, models.CompanyAdminRole, models.CompanyProjectManagerRole, models.CompanyContributorRole)
+		}
+
+		// PUT /companies/{companyId}
+		return callerHasRolesForCompanyById(requestedCompanyId, permissions, models.CompanyAdminRole)
+	}
+
+	if method == "GET" {
+		// GET /companies/{companyId}/...
+		return callerHasRolesForCompanyById(requestedCompanyId, permissions, models.CompanyAdminRole, models.CompanyProjectManagerRole, models.CompanyContributorRole)
+	}
+
+	// Unsupported method
+	return &UnauthorizedError{}
+}
+
+func (s *authServiceImpl) AuthorizeContract(method string, callerUserID uuid.UUID, permissions []*models.Permission, hasMoreParts bool, requestedCompanyId string, requestedContractId string) error {
+	if method == "POST" {
+		// POST /companies/{companyId}/contracts
+		return callerHasRolesForCompanyById(requestedCompanyId, permissions, models.CompanyProjectManagerRole)
+	}
+
+	if method == "GET" {
+		// TODO: Implement this
+	}
+
+	// Unsupported method
+	return &UnauthorizedError{}
+}
+
+func callerHasRolesForCompanyById(requestedCompanyId string, permissions []*models.Permission, allowedRoles ...models.Role) error {
+	for _, permission := range permissions {
+		if permission.CompanyID == requestedCompanyId {
+			for _, role := range allowedRoles {
+				if permission.Role == role {
+					return nil
+				}
+			}
+		}
+	}
+	return &UnauthorizedError{}
+}
+
+func callerHasRolesForContractById(requestedCompanyId string, requestedContractId string, permissions []*models.Permission, allowedRoles ...models.Role) error {
+	for _, permission := range permissions {
+		if permission.CompanyID == requestedCompanyId && permission.ContractID == requestedContractId {
+			for _, role := range allowedRoles {
+				if permission.Role == role {
+					return nil
+				}
+			}
+		}
+	}
+	return &UnauthorizedError{}
 }

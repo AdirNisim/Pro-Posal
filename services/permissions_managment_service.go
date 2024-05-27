@@ -61,7 +61,7 @@ func (s *PermissionManagementServiceImpl) CreatePermission(ctx context.Context, 
 		return nil, fmt.Errorf("failed inserting permission to database: %w", err)
 	}
 
-	return permissionDaoToPermissionModel(permissionDao), nil
+	return permissionDaoToPermissionModel(&permissionDao), nil
 }
 
 func (s *PermissionManagementServiceImpl) UpdatePermission(ctx context.Context, req UpdatePermissionRequest) (*models.Permission, error) {
@@ -84,12 +84,12 @@ func (s *PermissionManagementServiceImpl) UpdatePermission(ctx context.Context, 
 		return nil, fmt.Errorf("error updating permission: %w", err)
 	}
 
-	updatedPermission := permissionDaoToPermissionModel(*permission)
+	updatedPermission := permissionDaoToPermissionModel(permission)
 	return updatedPermission, nil
 }
 
 func (s *PermissionManagementServiceImpl) GetPermissions(ctx context.Context, companyId string) ([]*models.UserPermission, error) {
-	permissions, err := dao.Permissions(
+	permissionsDao, err := dao.Permissions(
 		qm.Select("permissions.*, users.*"),
 		qm.InnerJoin("users on permissions.user_id = users.id"),
 		qm.Where("permissions.company_id = ?", companyId),
@@ -98,27 +98,19 @@ func (s *PermissionManagementServiceImpl) GetPermissions(ctx context.Context, co
 		return nil, fmt.Errorf("error fetching permissions: %w", err)
 	}
 
-	userPermissions := make([]*models.UserPermission, len(permissions))
-	for i, permission := range permissions {
+	userPermissions := make([]*models.UserPermission, len(permissionsDao))
+	for i, permissionDao := range permissionsDao {
 		userPermissions[i] = &models.UserPermission{
 			User: models.User{
-				ID:        permission.R.User.ID,
-				FirstName: permission.R.User.FirstName,
-				LastName:  permission.R.User.LastName,
-				Phone:     permission.R.User.Phone,
-				Email:     permission.R.User.Email,
-				CreatedAt: permission.R.User.CreatedAt,
-				UpdatedAt: permission.R.User.UpdatedAt,
+				ID:        permissionDao.R.User.ID,
+				FirstName: permissionDao.R.User.FirstName,
+				LastName:  permissionDao.R.User.LastName,
+				Phone:     permissionDao.R.User.Phone,
+				Email:     permissionDao.R.User.Email,
+				CreatedAt: permissionDao.R.User.CreatedAt,
+				UpdatedAt: permissionDao.R.User.UpdatedAt,
 			},
-			Permission: models.Permission{
-				ID:         permission.ID,
-				UserID:     permission.UserID,
-				CompanyID:  permission.CompanyID,
-				Role:       permission.Role,
-				ContractID: permission.ContractID,
-				CreatedAt:  permission.CreatedAt,
-				UpdatedAt:  permission.UpdatedAt,
-			},
+			Permission: *permissionDaoToPermissionModel(permissionDao),
 		}
 	}
 
@@ -134,7 +126,7 @@ func (s *PermissionManagementServiceImpl) DeletePermission(ctx context.Context, 
 		}
 		return nil, fmt.Errorf("error retrieving permission: %w", err)
 	}
-	permission := permissionDaoToPermissionModel(*permissionDao)
+	permission := permissionDaoToPermissionModel(permissionDao)
 
 	_, err = permissionDao.Delete(ctx, s.db.Conn)
 	if err != nil {
@@ -144,12 +136,12 @@ func (s *PermissionManagementServiceImpl) DeletePermission(ctx context.Context, 
 	return permission, nil
 }
 
-func permissionDaoToPermissionModel(permissionDao dao.Permission) *models.Permission {
+func permissionDaoToPermissionModel(permissionDao *dao.Permission) *models.Permission {
 	return &models.Permission{
 		ID:         permissionDao.ID,
 		UserID:     permissionDao.UserID,
 		CompanyID:  permissionDao.CompanyID,
-		Role:       permissionDao.Role,
+		Role:       models.Role(permissionDao.Role),
 		ContractID: permissionDao.ContractID,
 		CreatedAt:  permissionDao.CreatedAt,
 		UpdatedAt:  permissionDao.UpdatedAt,

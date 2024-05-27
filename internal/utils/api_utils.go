@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -37,9 +38,19 @@ func MarshalAndWriteResponse(w http.ResponseWriter, data interface{}) {
 	w.Write(resp)
 }
 
-func GetUserIDFromSession(r *http.Request) uuid.UUID {
-	session, ok := r.Context().Value("session").(*models.Session)
+func GetSessionFromContext(ctx context.Context) *models.Session {
+	session, ok := ctx.Value("session").(*models.Session)
 	if !ok {
+		log.Println("Session is not found or is of the incorrect type")
+		return nil
+	}
+
+	return session
+}
+
+func GetUserIDFromSession(r *http.Request) uuid.UUID {
+	session := GetSessionFromContext(r.Context())
+	if session == nil {
 		log.Println("Session is not found or is of the incorrect type")
 		return uuid.Nil
 	}

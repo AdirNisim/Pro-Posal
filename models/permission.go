@@ -2,11 +2,21 @@ package models
 
 import "time"
 
+type Role string
+
+const (
+	AdminRole                 Role = "admin"
+	CompanyAdminRole          Role = "company_admin"
+	CompanyContributorRole    Role = "company_contributor"
+	CompanyProjectManagerRole Role = "company_project_manager"
+	ProspectRole              Role = "prospect"
+)
+
 type Permission struct {
 	ID         string    `json:"id"`
 	UserID     string    `json:"user_id"`
 	CompanyID  string    `json:"company_id"`
-	Role       string    `json:"role"`
+	Role       Role      `json:"role"`
 	ContractID string    `json:"contract_id"`
 	CreatedAt  time.Time `json:"created_at"`
 	UpdatedAt  time.Time `json:"updated_at"`

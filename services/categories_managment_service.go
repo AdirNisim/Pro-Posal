@@ -157,11 +157,17 @@ func (s *CategoryManagementServiceImpl) DeleteCategory(ctx context.Context, id s
 		categoryIDsToDelete = append(categoryIDsToDelete, category.ID)
 	}
 
-	_, err = dao.Categories(
-		qm.Where("id IN ?", categoryIDsToDelete),
-	).DeleteAll(ctx, s.db.Conn)
-	if err != nil {
-		return nil, fmt.Errorf("failed to delete categories from database: %w", err)
+	deletedAt := null.TimeFrom(time.Now())
+
+	for _, categoryID := range categoryIDsToDelete {
+		_, err := dao.Categories(
+			qm.Where("id = ?", categoryID),
+		).UpdateAll(ctx, s.db.Conn, map[string]interface{}{
+			"deleted_at": deletedAt,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to mark category as deleted: %w", err)
+		}
 	}
 
 	return parentCategory, nil
@@ -200,5 +206,6 @@ func categoryDaoToCategoryModel(categoryDao dao.Category) *models.Category {
 		Type:        models.CategoryType(categoryDao.Type),
 		CreatedAt:   categoryDao.CreatedAt,
 		UpdatedAt:   categoryDao.UpdatedAt,
+		DeleteAt:    categoryDao.DeletedAt.Time,
 	}
 }

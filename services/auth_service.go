@@ -14,6 +14,7 @@ import (
 	"github.com/pro-posal/webserver/internal/database"
 	"github.com/pro-posal/webserver/internal/utils"
 	"github.com/pro-posal/webserver/models"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
 type UnauthorizedError struct{}
@@ -42,9 +43,10 @@ func NewAuthService(db *database.DBConnector) AuthService {
 }
 
 func (s *authServiceImpl) CreateAuthToken(ctx context.Context, email string, password string) (*models.AuthToken, error) {
+
 	userDao, err := dao.Users(
 		dao.UserWhere.EmailHash.EQ(utils.HashEmail(email)),
-		// dao.UserWhere.DeletedAt.IsNull(), // TODO - Example when you'll introduce deleted_at
+		dao.UserWhere.DeletedAt.IsNull(),
 	).One(ctx, s.db.Conn)
 
 	if err != nil {
@@ -63,12 +65,26 @@ func (s *authServiceImpl) CreateAuthToken(ctx context.Context, email string, pas
 		return nil, fmt.Errorf("failed parsing user ID %v: %w", userDao.ID, err) // Should never happen
 	}
 
-	return s.createTokenFromSession(ctx, &models.Session{
+	session := models.Session{
 		ID:        uuid.New(),
 		UserID:    userID,
 		CreatedAt: time.Now(),
 		ExpiresAt: time.Now().Add(time.Duration(config.AppConfig.Auth.ExpirationTimeMinutes) * time.Minute),
-	})
+	}
+
+	sessionDao := dao.Session{
+		ID:        session.ID.String(),
+		UserID:    session.UserID.String(),
+		CreatedAt: time.Now(),
+		ExpiresAt: time.Now().Add(time.Duration(config.AppConfig.Auth.ExpirationTimeMinutes) * time.Minute),
+	}
+
+	err = sessionDao.Insert(ctx, s.db.Conn, boil.Infer())
+	if err != nil {
+		return nil, fmt.Errorf("failed to insert session into database: %w", err)
+	}
+
+	return s.createTokenFromSession(ctx, &session)
 }
 
 func (s *authServiceImpl) ValidateAuthToken(ctx context.Context, token string) (*models.Session, error) {

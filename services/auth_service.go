@@ -108,21 +108,29 @@ func (s *authServiceImpl) ValidateAuthToken(ctx context.Context, token string) (
 		return nil, errors.New("invalid claims within token")
 	}
 
-	// TODO - For options #2 - you'll just get the sessionID and fetch the session object from the database
-	// createdAt, err := time.Parse("2006-01-02T15:04:05.000Z", claims["session"].(map[string]any)["created_at"].(string))
-	// if err != nil {
-	// 	return nil, fmt.Errorf("failed parsing created_at from claims: %w", err)
-	// }
-	// expiresAt, err := time.Parse("2006-01-02T15:04:05.000Z", claims["session"].(map[string]any)["expires_at"].(string))
-	// if err != nil {
-	// 	return nil, fmt.Errorf("failed parsing expires_at from claims: %w", err)
-	// }
-
 	session := &models.Session{
 		ID:        uuid.MustParse(claims["session"].(map[string]any)["id"].(string)),
 		UserID:    uuid.MustParse(claims["session"].(map[string]any)["user_id"].(string)),
-		//CreatedAt: createdAt,
-		//ExpiresAt: expiresAt,
+		CreatedAt: claims["session"].(map[string]any)["created_at"].(time.Time),
+		ExpiresAt: claims["session"].(map[string]any)["expires_at"].(time.Time),
+	}
+
+	sessionDao, err := dao.FindSession(ctx, s.db.Conn, session.ID.String())
+	if err != nil {
+		return nil, fmt.Errorf("failed to find user: %w", err)
+	}
+
+	// Validate the fetched session's details
+	if sessionDao.UserID != session.UserID.String() ||
+		!sessionDao.CreatedAt.Equal(session.CreatedAt) ||
+		!sessionDao.ExpiresAt.Equal(session.ExpiresAt) ||
+		sessionDao.ID != session.ID.String() {
+		return nil, errors.New("session details do not match token details")
+	}
+
+	// Additional optional checks
+	if time.Now().After(session.ExpiresAt) {
+		return nil, errors.New("session has expired")
 	}
 
 	// Sanity Check

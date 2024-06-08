@@ -78,7 +78,7 @@ func (s *CompanyManagementServiceImpl) CreateCompany(ctx context.Context, req Cr
 		ID:         uuid.NewString(),
 		UserID:     companyDao.ContactID,
 		CompanyID:  companyDao.ID,
-		Role:       "Owner",
+		Role:       string(models.AdminRole),
 		ContractID: "",
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),

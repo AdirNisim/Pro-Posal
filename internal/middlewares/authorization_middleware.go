@@ -6,12 +6,15 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
+	"github.com/pro-posal/webserver/dao"
+	"github.com/pro-posal/webserver/internal/database"
 	"github.com/pro-posal/webserver/internal/utils"
 	"github.com/pro-posal/webserver/models"
 	"github.com/pro-posal/webserver/services"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
-func AuthorizationMiddleware(authService services.AuthService, next http.Handler) http.Handler {
+func AuthorizationMiddleware(authService services.AuthService, next http.Handler, db *database.DBConnector) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		session := utils.GetSessionFromContext(r.Context())
 		if session == nil {
@@ -20,7 +23,25 @@ func AuthorizationMiddleware(authService services.AuthService, next http.Handler
 			return
 		}
 
-		var permissions []*models.Permission // TODO: Get this from the database "SELECT * FROM permissions WHERE user_id = session.UserID"
+		permissionsDao, err := dao.Permissions(qm.Where("user_id = ?", session.UserID)).All(r.Context(), db.Conn)
+		if err != nil {
+			log.Print("Error fetching permissions from the database: ", err)
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		permissions := make([]*models.Permission, len(permissionsDao))
+		for i, permissionDao := range permissionsDao {
+			permissions[i] = &models.Permission{
+				ID:         permissionDao.ID,
+				UserID:     permissionDao.UserID,
+				CompanyID:  permissionDao.CompanyID,
+				Role:       models.Role(permissionDao.Role),
+				ContractID: permissionDao.ContractID,
+				CreatedAt:  permissionDao.CreatedAt,
+				UpdatedAt:  permissionDao.UpdatedAt,
+			}
+		}
 
 		if hasAdminRole(permissions) {
 			log.Printf("Authorized admin %v to call %v", session.UserID, r.URL.Path)
@@ -30,8 +51,6 @@ func AuthorizationMiddleware(authService services.AuthService, next http.Handler
 
 		pathParts := strings.Split(r.URL.Path, "/")
 		resourceIndex := 0
-
-		var err error
 
 		for resourceIndex < len(pathParts) {
 			hasMoreParts := resourceIndex+2 < len(pathParts)

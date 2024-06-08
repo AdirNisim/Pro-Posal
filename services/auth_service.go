@@ -75,8 +75,8 @@ func (s *authServiceImpl) CreateAuthToken(ctx context.Context, email string, pas
 	sessionDao := dao.Session{
 		ID:        session.ID.String(),
 		UserID:    session.UserID.String(),
-		CreatedAt: time.Now(),
-		ExpiresAt: time.Now().Add(time.Duration(config.AppConfig.Auth.ExpirationTimeMinutes) * time.Minute),
+		CreatedAt: time.Now().UTC(),
+		ExpiresAt: time.Now().Add(time.Duration(config.AppConfig.Auth.ExpirationTimeMinutes) * time.Minute).UTC(),
 	}
 
 	err = sessionDao.Insert(ctx, s.db.Conn, boil.Infer())
@@ -108,17 +108,30 @@ func (s *authServiceImpl) ValidateAuthToken(ctx context.Context, token string) (
 		return nil, errors.New("invalid claims within token")
 	}
 
+	// Convert the Unix timestamps to time.Time
+	createdAt := time.Unix(int64(claims["cre"].(float64)), 0).UTC()
+	expiresAt := time.Unix(int64(claims["exp"].(float64)), 0).UTC()
+
 	session := &models.Session{
-		ID:        uuid.MustParse(claims["session"].(map[string]any)["id"].(string)),
-		UserID:    uuid.MustParse(claims["session"].(map[string]any)["user_id"].(string)),
-		CreatedAt: claims["session"].(map[string]any)["created_at"].(time.Time),
-		ExpiresAt: claims["session"].(map[string]any)["expires_at"].(time.Time),
+		ID:        uuid.MustParse(claims["id"].(string)),
+		UserID:    uuid.MustParse(claims["sub"].(string)),
+		CreatedAt: createdAt,
+		ExpiresAt: expiresAt,
 	}
+
+	fmt.Println(session.CreatedAt)
+	fmt.Println(session.ExpiresAt)
 
 	sessionDao, err := dao.FindSession(ctx, s.db.Conn, session.ID.String())
 	if err != nil {
 		return nil, fmt.Errorf("failed to find user: %w", err)
 	}
+
+	fmt.Println("Seesion DAO:")
+	fmt.Println(sessionDao.ID)
+	fmt.Println(sessionDao.UserID)
+	fmt.Println(sessionDao.CreatedAt)
+	fmt.Println(sessionDao.ExpiresAt)
 
 	// Validate the fetched session's details
 	if sessionDao.UserID != session.UserID.String() ||
@@ -144,9 +157,9 @@ func (s *authServiceImpl) ValidateAuthToken(ctx context.Context, token string) (
 func (s *authServiceImpl) createTokenFromSession(_ context.Context, session *models.Session) (*models.AuthToken, error) {
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": session.UserID,
-		// "session", session.ID, // TODO - This is for option #2
-		"session": session,
-		"exp":     session.ExpiresAt.Unix(),
+		"id":  session.ID,
+		"exp": session.ExpiresAt.Unix(),
+		"cre": session.CreatedAt.Unix(),
 	})
 
 	bearerToken, err := at.SignedString([]byte(config.AppConfig.Auth.JWTSigningSecret))

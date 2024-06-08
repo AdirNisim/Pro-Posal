@@ -35,6 +35,17 @@ func (a *API) PostPermmision(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error parsing request body", http.StatusBadRequest)
 		return
 	}
+	// Check that request.Role is one of the predefined roles
+	validRole := request.Role == string(models.CompanyAdminRole) ||
+		request.Role == string(models.CompanyContributorRole) ||
+		request.Role == string(models.CompanyProjectManagerRole) ||
+		request.Role == string(models.ProspectRole)
+
+	if !validRole {
+		log.Printf("Invalid role provided: %v", request.Role)
+		http.Error(w, "Invalid role provided", http.StatusBadRequest)
+		return
+	}
 
 	permission, err := a.permissionsManagement.CreatePermission(r.Context(), services.CreatePermissionRequest{
 		UserID:     request.UserID,

@@ -55,7 +55,7 @@ func (a *API) NewRouter() http.Handler {
 		return middlewares.AuthenticationMiddleware(a.authService, h)
 	})
 	router.Use(func(h http.Handler) http.Handler {
-		return middlewares.AuthorizationMiddleware(a.authService, h)
+		return middlewares.AuthorizationMiddleware(a.authService, h, a.db)
 	})
 
 	// Check API status

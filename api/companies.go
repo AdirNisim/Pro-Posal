@@ -13,7 +13,6 @@ import (
 type PostCompanyRequestBody struct {
 	Name       string `json:"name"`
 	Address    string `json:"address"`
-	ContactID  string `json:"contact_id"`
 	LogoBase64 string `json:"logo_base64"`
 }
 type PUTCompanyRequestBody struct {
@@ -36,8 +35,7 @@ func (a *API) PostCompanies(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	company, err := a.companyManagement.CreateCompany(r.Context(), services.CreateCompanyRequest{
-		Name: request.Name,
-		// ContactID:  request.ContactID, // TODO: do you really need it from the request?
+		Name:       request.Name,
 		ContactID:  utils.GetUserIDFromSession(r).String(),
 		Address:    request.Address,
 		LogoBase64: request.LogoBase64})

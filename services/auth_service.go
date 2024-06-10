@@ -119,19 +119,10 @@ func (s *authServiceImpl) ValidateAuthToken(ctx context.Context, token string) (
 		ExpiresAt: expiresAt,
 	}
 
-	fmt.Println(session.CreatedAt)
-	fmt.Println(session.ExpiresAt)
-
 	sessionDao, err := dao.FindSession(ctx, s.db.Conn, session.ID.String())
 	if err != nil {
 		return nil, fmt.Errorf("failed to find user: %w", err)
 	}
-
-	fmt.Println("Seesion DAO:")
-	fmt.Println(sessionDao.ID)
-	fmt.Println(sessionDao.UserID)
-	fmt.Println(sessionDao.CreatedAt)
-	fmt.Println(sessionDao.ExpiresAt)
 
 	// Validate the fetched session's details
 	if sessionDao.UserID != session.UserID.String() ||

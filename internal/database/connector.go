@@ -32,3 +32,23 @@ func Connect() *DBConnector {
 		Conn: db,
 	}
 }
+
+func TestConnect() *DBConnector {
+	connstr := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%s sslmode=%s",
+		config.TestConfig.TestDatabase.UserName,
+		config.TestConfig.TestDatabase.Password,
+		config.TestConfig.TestDatabase.DbName,
+		config.TestConfig.TestDatabase.Host,
+		config.TestConfig.TestDatabase.Port,
+		config.TestConfig.TestDatabase.SSLMode,
+	)
+
+	db, err := sql.Open("postgres", connstr)
+	if err != nil {
+		log.Fatalf("Could not connect to the database! %v", err)
+	}
+
+	return &DBConnector{
+		Conn: db,
+	}
+}

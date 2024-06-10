@@ -9,48 +9,18 @@ import (
 	"fmt"
 	"log"
 	"os/exec"
-	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib" // Import pgx driver
 	"github.com/pressly/goose/v3"
+	"github.com/pro-posal/webserver/config"
 )
 
-const (
-	dbUser     = "user"
-	dbPassword = "123456"
-	dbName     = "testdb"
-	dbHost     = "localhost"
-	dbPort     = "5543"
-)
-
-func TestMain() {
-	ctx := context.Background()
-
-	// Step 1: Run a new Docker container
-	_, err := runDockerContainer(ctx)
-	if err != nil {
-		log.Fatalf("Failed to run Docker container: %v", err)
-	}
-	defer stopDockerContainer(ctx)
-
-	// Step 2: Wait for the database to be ready
-	time.Sleep(2 * time.Second)
-
-	// Step 3: Run migrations
-	if err := runMigrations(); err != nil {
-		fmt.Printf("Failed to run migrations: %v", err)
-		return
-	}
-
-	fmt.Println("Database setup completed successfully")
-}
-
-func runDockerContainer(ctx context.Context) (string, error) {
+func RunDockerContainer(ctx context.Context) (string, error) {
 	cmd := exec.CommandContext(ctx, "docker", "run", "-d", "--name", "TempDB",
-		"-e", "POSTGRES_USER="+dbUser,
-		"-e", "POSTGRES_PASSWORD="+dbPassword,
-		"-e", "POSTGRES_DB="+dbName,
-		"-p", dbPort+":5432", "postgres")
+		"-e", "POSTGRES_USER="+config.TestConfig.TestDatabase.UserName,
+		"-e", "POSTGRES_PASSWORD="+config.TestConfig.TestDatabase.Password,
+		"-e", "POSTGRES_DB="+config.TestConfig.TestDatabase.DbName,
+		"-p", config.TestConfig.TestDatabase.Port+":5432", "postgres")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return "", fmt.Errorf("failed to start Docker container: %w\n%s", err, output)
@@ -60,7 +30,7 @@ func runDockerContainer(ctx context.Context) (string, error) {
 	return containerID, nil
 }
 
-func stopDockerContainer(ctx context.Context) {
+func StopDockerContainer(ctx context.Context) {
 	stopCmd := exec.CommandContext(ctx, "docker", "stop", "TempDB")
 	err := stopCmd.Run()
 	if err != nil {
@@ -75,15 +45,21 @@ func stopDockerContainer(ctx context.Context) {
 	}
 }
 
-func runMigrations() error {
-	dbString := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", dbUser, dbPassword, dbHost, dbPort, dbName)
+func RunMigrations() error {
+	dbString := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
+		config.TestConfig.TestDatabase.UserName,
+		config.TestConfig.TestDatabase.Password,
+		config.TestConfig.TestDatabase.Host,
+		config.TestConfig.TestDatabase.Port,
+		config.TestConfig.TestDatabase.DbName)
+
 	db, err := goose.OpenDBWithDriver("pgx", dbString)
 	if err != nil {
 		return fmt.Errorf("failed to open DB: %w", err)
 	}
 	defer db.Close()
 
-	err = goose.Up(db, "../migrations")
+	err = goose.Up(db, "../../migrations")
 	if err != nil {
 		return fmt.Errorf("failed to run migrations: %w", err)
 	}

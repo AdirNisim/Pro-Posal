@@ -1,48 +1,48 @@
 package database
 
-// TODO:
-// 1. Copy the "main schema" file to the migrations, so I can "migrate" my database from scratch to the latest version.
-// 2. Implement a function that will run the migrations on a given database.
-
 import (
 	"context"
 	"fmt"
 	"log"
-	"os/exec"
 
 	_ "github.com/jackc/pgx/v5/stdlib" // Import pgx driver
 	"github.com/pressly/goose/v3"
 	"github.com/pro-posal/webserver/config"
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/wait"
 )
 
-func RunDockerContainer(ctx context.Context) (string, error) {
-	cmd := exec.CommandContext(ctx, "docker", "run", "-d", "--name", "TempDB",
-		"-e", "POSTGRES_USER="+config.TestConfig.TestDatabase.UserName,
-		"-e", "POSTGRES_PASSWORD="+config.TestConfig.TestDatabase.Password,
-		"-e", "POSTGRES_DB="+config.TestConfig.TestDatabase.DbName,
-		"-p", config.TestConfig.TestDatabase.Port+":5432", "postgres")
-	output, err := cmd.CombinedOutput()
+func RunDockerContainer(ctx context.Context) (string, string, testcontainers.Container, error) {
+	req := testcontainers.ContainerRequest{
+		Image:        "postgres:latest", // or the specific image you need
+		ExposedPorts: []string{"5432/tcp"},
+		Env: map[string]string{
+			"POSTGRES_DB":       config.TestConfig.TestDatabase.DbName,
+			"POSTGRES_USER":     config.TestConfig.TestDatabase.UserName,
+			"POSTGRES_PASSWORD": config.TestConfig.TestDatabase.Password,
+		},
+		WaitingFor: wait.ForListeningPort("5432/tcp"),
+	}
+	postgres, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
+		ContainerRequest: req,
+		Started:          true,
+	})
 	if err != nil {
-		return "", fmt.Errorf("failed to start Docker container: %w\n%s", err, output)
+		return "", "", nil, err
 	}
 
-	containerID := string(output)
-	return containerID, nil
-}
-
-func StopDockerContainer(ctx context.Context) {
-	stopCmd := exec.CommandContext(ctx, "docker", "stop", "TempDB")
-	err := stopCmd.Run()
+	host, err := postgres.Host(ctx)
 	if err != nil {
-		log.Fatalf("Failed to stop Docker container: %v", err)
+		return "", "", postgres, err
 	}
 
-	// Remove the Docker container
-	removeCmd := exec.CommandContext(ctx, "docker", "rm", "TempDB")
-	err = removeCmd.Run()
+	mappedPort, err := postgres.MappedPort(ctx, "5432")
 	if err != nil {
-		log.Fatalf("Failed to remove Docker container: %v", err)
+		return "", "", postgres, err
 	}
+
+	log.Printf("PostgreSQL container started on host: %s, port: %s", host, mappedPort.Port())
+	return host, mappedPort.Port(), postgres, nil
 }
 
 func RunMigrations() error {

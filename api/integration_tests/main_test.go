@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/antelman107/net-wait-go/wait"
 	"github.com/pro-posal/webserver/api"
 	"github.com/pro-posal/webserver/config"
 	"github.com/pro-posal/webserver/internal/database"
@@ -19,20 +20,20 @@ import (
 var client *ApiClient
 
 func TestMain(m *testing.M) {
-
 	ctx := context.Background()
 
 	// Step 1: Run a new Docker container
-	_, err := database.RunDockerContainer(ctx)
+	host, port, postgres, err := database.RunDockerContainer(ctx)
 	if err != nil {
 		log.Fatalf("Failed to run Docker container: %v", err)
 	}
-	defer database.StopDockerContainer(ctx)
+	defer postgres.Terminate(ctx)
 
-	// Step 2: Wait for the database to be ready
-	time.Sleep(2 * time.Second)
+	// Update the configuration to use the container's host and port
+	config.TestConfig.TestDatabase.Host = host
+	config.TestConfig.TestDatabase.Port = port
 
-	// Step 3: Run migrations
+	// Step 2: Run migrations
 	if err := database.RunMigrations(); err != nil {
 		log.Printf("Failed to run migrations: %v", err)
 		return
@@ -76,10 +77,13 @@ func TestMain(m *testing.M) {
 		}
 	}()
 
-	// Wait for the server to start -- Does not work otherwise!
-	time.Sleep(2 * time.Second)
+	// Wait for the server to start
+	serverAddress := config.TestConfig.TestServer.URL
+	if err := waitForService(serverAddress, 15*time.Second); err != nil {
+		log.Fatalf("Failed to wait for server: %v", err)
+	}
 
-	client, err = NewApiClient(config.TestConfig.TestServer.URL,
+	client, err = NewApiClient(serverAddress,
 		config.TestConfig.User.Email,
 		config.TestConfig.User.Password)
 	if err != nil {
@@ -87,4 +91,17 @@ func TestMain(m *testing.M) {
 	}
 
 	os.Exit(m.Run())
+}
+
+func waitForService(address string, timeout time.Duration) error {
+	if !wait.New(
+		wait.WithProto("tcp"),
+		wait.WithWait(200*time.Millisecond),
+		wait.WithBreak(50*time.Millisecond),
+		wait.WithDeadline(timeout),
+		wait.WithDebug(true),
+	).Do([]string{address}) {
+		return fmt.Errorf("service at %s is not available", address)
+	}
+	return nil
 }

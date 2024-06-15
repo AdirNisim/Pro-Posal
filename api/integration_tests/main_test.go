@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/antelman107/net-wait-go/wait"
 	"github.com/pro-posal/webserver/api"
 	"github.com/pro-posal/webserver/config"
 	"github.com/pro-posal/webserver/internal/database"
@@ -77,9 +76,9 @@ func TestMain(m *testing.M) {
 		}
 	}()
 
-	// Wait for the server to start
+	// // Wait for the server to start
 	serverAddress := config.TestConfig.TestServer.URL
-	if err := waitForService(serverAddress, 15*time.Second); err != nil {
+	if err := waitForService(serverAddress, 30*time.Second); err != nil {
 		log.Fatalf("Failed to wait for server: %v", err)
 	}
 
@@ -93,15 +92,14 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func waitForService(address string, timeout time.Duration) error {
-	if !wait.New(
-		wait.WithProto("tcp"),
-		wait.WithWait(200*time.Millisecond),
-		wait.WithBreak(50*time.Millisecond),
-		wait.WithDeadline(timeout),
-		wait.WithDebug(true),
-	).Do([]string{address}) {
-		return fmt.Errorf("service at %s is not available", address)
+func waitForService(serviceURL string, timeout time.Duration) error {
+	deadline := time.Now().Add(timeout)
+	for time.Now().Before(deadline) {
+		_, err := http.Get(serviceURL)
+		if err == nil {
+			return nil
+		}
+		time.Sleep(1 * time.Second)
 	}
-	return nil
+	return fmt.Errorf("service at %s is not available", serviceURL)
 }

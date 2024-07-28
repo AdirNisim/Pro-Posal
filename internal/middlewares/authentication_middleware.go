@@ -12,6 +12,7 @@ import (
 var AuthBypassRoutes = map[string]string{
 	"/status":      "GET",
 	"/users/login": "POST",
+	"/users":       "POST",
 }
 
 func AuthenticationMiddleware(authService services.AuthService, next http.Handler) http.Handler {

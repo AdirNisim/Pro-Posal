@@ -3,6 +3,7 @@ package api
 import (
 	"log"
 	"net/http"
+	"slices"
 
 	"github.com/gorilla/mux"
 	"github.com/pro-posal/webserver/internal/utils"
@@ -33,6 +34,20 @@ func (a *API) PostPermmision(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("Error parsing request body: %v", err)
 		http.Error(w, "Error parsing request body", http.StatusBadRequest)
+		return
+	}
+
+	// Validate the role provided
+	allowedRoles := []string{
+		string(models.CompanyAdminRole),
+		string(models.CompanyContributorRole),
+		string(models.CompanyProjectManagerRole),
+		string(models.ProspectRole),
+	}
+	// Check if the role provided is in the allowed roles
+	if !slices.Contains(allowedRoles, request.Role) {
+		log.Printf("Invalid role provided: %v", request.Role)
+		http.Error(w, "Invalid role provided", http.StatusBadRequest)
 		return
 	}
 

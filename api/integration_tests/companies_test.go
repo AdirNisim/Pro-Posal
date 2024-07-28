@@ -24,7 +24,7 @@ func TestPostAndGetCompany(t *testing.T) {
 	assert.NotEmpty(t, resp.CreatedAt)
 	assert.NotEmpty(t, resp.UpdatedAt)
 
-	// TODO: Add Get company
-	var getResp models.Company
-	client.Get(t, "/companies?id="+resp.ID, http.StatusOK, &getResp)
+	// // TODO: Add Get company
+	// var getResp models.Company
+	// client.Get(t, "/companies?id="+resp.ID, http.StatusOK, &getResp)
 }

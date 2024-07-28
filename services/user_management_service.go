@@ -2,6 +2,8 @@ package services
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -65,7 +67,14 @@ func (s *userManagementServiceImpl) CreateUser(ctx context.Context, req CreateUs
 		UpdatedAt:    time.Now(),
 	}
 
-	// TODO: Check if already exists to ensure non-500 errors for idempotency
+	// Check if already exists to ensure non-500 errors for idempotency
+	existingUser, err := dao.Users(dao.UserWhere.Email.EQ(req.Email)).One(ctx, s.db.Conn)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, fmt.Errorf("failed checking for existing user: %w", err)
+	}
+	if existingUser != nil {
+		return nil, fmt.Errorf("user with email %s already exists", req.Email)
+	}
 
 	err = userDao.Insert(ctx, s.db.Conn, boil.Infer())
 	if err != nil {

@@ -14,6 +14,7 @@ import (
 	"github.com/pro-posal/webserver/internal/database"
 	"github.com/pro-posal/webserver/internal/utils"
 	"github.com/pro-posal/webserver/models"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
 type UnauthorizedError struct{}
@@ -42,9 +43,10 @@ func NewAuthService(db *database.DBConnector) AuthService {
 }
 
 func (s *authServiceImpl) CreateAuthToken(ctx context.Context, email string, password string) (*models.AuthToken, error) {
+
 	userDao, err := dao.Users(
 		dao.UserWhere.EmailHash.EQ(utils.HashEmail(email)),
-		// dao.UserWhere.DeletedAt.IsNull(), // TODO - Example when you'll introduce deleted_at
+		dao.UserWhere.DeletedAt.IsNull(),
 	).One(ctx, s.db.Conn)
 
 	if err != nil {
@@ -63,12 +65,26 @@ func (s *authServiceImpl) CreateAuthToken(ctx context.Context, email string, pas
 		return nil, fmt.Errorf("failed parsing user ID %v: %w", userDao.ID, err) // Should never happen
 	}
 
-	return s.createTokenFromSession(ctx, &models.Session{
+	session := models.Session{
 		ID:        uuid.New(),
 		UserID:    userID,
 		CreatedAt: time.Now(),
 		ExpiresAt: time.Now().Add(time.Duration(config.AppConfig.Auth.ExpirationTimeMinutes) * time.Minute),
-	})
+	}
+
+	sessionDao := dao.Session{
+		ID:        session.ID.String(),
+		UserID:    session.UserID.String(),
+		CreatedAt: time.Now().UTC(),
+		ExpiresAt: time.Now().Add(time.Duration(config.AppConfig.Auth.ExpirationTimeMinutes) * time.Minute).UTC(),
+	}
+
+	err = sessionDao.Insert(ctx, s.db.Conn, boil.Infer())
+	if err != nil {
+		return nil, fmt.Errorf("failed to insert session into database: %w", err)
+	}
+
+	return s.createTokenFromSession(ctx, &session)
 }
 
 func (s *authServiceImpl) ValidateAuthToken(ctx context.Context, token string) (*models.Session, error) {
@@ -92,20 +108,33 @@ func (s *authServiceImpl) ValidateAuthToken(ctx context.Context, token string) (
 		return nil, errors.New("invalid claims within token")
 	}
 
-	// TODO - For options #2 - you'll just get the sessionID and fetch the session object from the database
-	// createdAt, err := time.Parse("2006-01-02T15:04:05.000Z", claims["session"].(map[string]any)["created_at"].(string))
-	// if err != nil {
-	// 	return nil, fmt.Errorf("failed parsing created_at from claims: %w", err)
-	// }
-	// expiresAt, err := time.Parse("2006-01-02T15:04:05.000Z", claims["session"].(map[string]any)["expires_at"].(string))
-	// if err != nil {
-	// 	return nil, fmt.Errorf("failed parsing expires_at from claims: %w", err)
-	// }
+	// Convert the Unix timestamps to time.Time
+	createdAt := time.Unix(int64(claims["cre"].(float64)), 0).UTC()
+	expiresAt := time.Unix(int64(claims["exp"].(float64)), 0).UTC()
+
 	session := &models.Session{
-		ID:     uuid.MustParse(claims["session"].(map[string]any)["id"].(string)),
-		UserID: uuid.MustParse(claims["session"].(map[string]any)["user_id"].(string)),
-		// CreatedAt: createdAt,
-		// ExpiresAt: expiresAt,
+		ID:        uuid.MustParse(claims["id"].(string)),
+		UserID:    uuid.MustParse(claims["sub"].(string)),
+		CreatedAt: createdAt,
+		ExpiresAt: expiresAt,
+	}
+
+	sessionDao, err := dao.FindSession(ctx, s.db.Conn, session.ID.String())
+	if err != nil {
+		return nil, fmt.Errorf("failed to find user: %w", err)
+	}
+
+	// Validate the fetched session's details
+	if sessionDao.UserID != session.UserID.String() ||
+		!sessionDao.CreatedAt.Equal(session.CreatedAt) ||
+		!sessionDao.ExpiresAt.Equal(session.ExpiresAt) ||
+		sessionDao.ID != session.ID.String() {
+		return nil, errors.New("session details do not match token details")
+	}
+
+	// Additional optional checks
+	if time.Now().After(session.ExpiresAt) {
+		return nil, errors.New("session has expired")
 	}
 
 	// Sanity Check
@@ -119,9 +148,9 @@ func (s *authServiceImpl) ValidateAuthToken(ctx context.Context, token string) (
 func (s *authServiceImpl) createTokenFromSession(_ context.Context, session *models.Session) (*models.AuthToken, error) {
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": session.UserID,
-		// "session", session.ID, // TODO - This is for option #2
-		"session": session,
-		"exp":     session.ExpiresAt.Unix(),
+		"id":  session.ID,
+		"exp": session.ExpiresAt.Unix(),
+		"cre": session.CreatedAt.Unix(),
 	})
 
 	bearerToken, err := at.SignedString([]byte(config.AppConfig.Auth.JWTSigningSecret))

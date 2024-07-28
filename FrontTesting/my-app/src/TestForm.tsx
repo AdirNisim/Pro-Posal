@@ -4,10 +4,10 @@ import React, { useState } from 'react';
 // At the end of the form, a submit button will allow the user to submit their selections.
 // Selecting a Category automatically selects all its associated Subcategories and Sentences.
 // Selecting a Subcategory automatically selects all its associated Sentences.
-// Selecting a Sentence automatically marks it, as well as its parent Subcategory and Category, as selected.
+// Selecting a Sentence automatically marks it, as well as its parent Subcategory and Category, as selected.  
 
 
-// Initial data structure
+// This is my initial data structure
 const initialData = [
   {
     id: 1,

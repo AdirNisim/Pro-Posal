@@ -47,7 +47,7 @@ const initialData = [
         tasks: [
           { id: 131, taskDescription: "Contractor will install up to 6 new 6” LED recessed lights all to be done according to the existing kitchen layout and design.", isChecked: false },
           { id: 132, taskDescription: "Contractor will install up to 2 new light switches that will be a white decor finish all to be done according to the existing kitchen layout and design.", isChecked: false },
-          { id: 132, taskDescription: "Contractor will install up to 6 new GFCI outlets all to be done according to the existing kitchen layout and design.", isChecked: false }
+          { id: 133, taskDescription: "Contractor will install up to 6 new GFCI outlets all to be done according to the existing kitchen layout and design.", isChecked: false }
         ]
       }
     ]
@@ -77,7 +77,7 @@ const initialData = [
             tasks: [
               { id: 231, taskDescription: "Contractor will frame a new bathroom layout that will include a new walk-in shower pan with a shampoo niche, vanity area, and toilet area. Bathroom to be approximately 5’ x 9’", isChecked: false },
               { id: 232, taskDescription: "Contractor will frame and block off the existing niche for the open shelving where the existing internet modem is located. ", isChecked: false },
-              { id: 232, taskDescription: "Contractor will frame a new niche at the proposed wall to accommodate for the open shelving and reinstall the existing shelves. .", isChecked: false }
+              { id: 233, taskDescription: "Contractor will frame a new niche at the proposed wall to accommodate for the open shelving and reinstall the existing shelves. .", isChecked: false }
             ]
           }
     ]
@@ -107,50 +107,59 @@ function TestForm() {
     const handleSubcategoryChange = (categoryId: number, subcategoryId: number) => {
         const newData = data.map(category => {
             if (category.id === categoryId) {
-                return {
-                    ...category, subcategories: category.subcategories.map(sub => {
-                        if (sub.id === subcategoryId) {
-                            const isChecked = !sub.isChecked;
-                            return {
-                                ...sub, isChecked, tasks: sub.tasks.map(task => ({
-                                    ...task, isChecked
-                                }))
-                            }
+                const updatedSubcategories = category.subcategories.map(sub => {
+                    if (sub.id === subcategoryId) {
+                        const isChecked = !sub.isChecked;
+                        return {
+                            ...sub, isChecked, tasks: sub.tasks.map(task => {
+                                return {
+                                    ...task, isChecked: isChecked
+                                }
+                            })
                         }
-                        return sub;
-                    })
+                    }
+                    return sub
+                })
+                const isAnySubcategoryChecked = updatedSubcategories.some(sub => sub.isChecked)
+                return {
+                    ...category, isChecked: isAnySubcategoryChecked, subcategories: updatedSubcategories
                 }
             }
             return category;
         })
         setData(newData);
     }
-    
+
     const handleTaskChange = (categoryId: number, subcategoryId: number, taskId: number) => {
         const newData = data.map(category => {
             if (categoryId === category.id) {
-                return {
-                    ...category, subcategories: category.subcategories.map(sub => {
-                        if (sub.id === subcategoryId) {
-                            return {
-                                ...sub, tasks: sub.tasks.map(task => {
-                                    if (taskId === task.id) {
-                                        return {
-                                            ...task, isChecked: !task.isChecked
-                                        }
-                                    }
-                                    return task
-                                })
+                const updatedSubcategories = category.subcategories.map(sub => {
+                    if (sub.id === subcategoryId) {
+                        const updatedTasks = sub.tasks.map(task => {
+                            if (task.id === taskId) {
+                                return {
+                                    ...task, isChecked: !task.isChecked
+                                }
                             }
+                            return task
+                        })
+                        const isAnyTaskChecked = updatedTasks.some(task => task.isChecked);
+                        return {
+                            ...sub, tasks: updatedTasks, isChecked: isAnyTaskChecked
                         }
-                        return sub
-                    })
+                    }
+                    return sub
+                })
+                const isAnySubcategoryChecked = updatedSubcategories.some(sub => sub.isChecked)
+                return {
+                    ...category, subcategories: updatedSubcategories, isChecked: isAnySubcategoryChecked
                 }
             }
             return category
         })
         setData(newData);
     }
+    
     const handleSubmit = () => {
         const filteredData = data.filter(category => category.isChecked)
                                  .map(category => ({
@@ -158,11 +167,12 @@ function TestForm() {
                                      subcategories: category.subcategories.filter(sub => sub.isChecked)
                                          .map(sub => ({
                                              subcategoryName: sub.subcategoryName,
-                                             tasks: sub.tasks.filter(task => ({
+                                             tasks: sub.tasks.filter(task => task.isChecked).map(task => ({
                                                     taskDescription: task.taskDescription
                                              }))
                                          }))
                                  }));
+        alert(JSON.stringify(filteredData, null, 2));
         console.log(filteredData);
     };
 
